@@ -1,0 +1,58 @@
+/**
+ * Service Worker for Quran One Day One Page (ODOP)
+ * Cache offline app shell
+ */
+
+const CACHE_NAME = 'quran-odop-v4';
+const ASSETS_TO_CACHE = [
+  './',
+  './index.html',
+  './manifest.json',
+  './fonts/LPMQ-IsepMisbah.ttf',
+  './assets/icons/icon-192.png',
+  './assets/icons/icon-512.png',
+  './css/main.css',
+  './css/calendar.css',
+  './css/reader.css',
+  './css/timer.css',
+  './js/quran-data.js',
+  './js/storage.js',
+  './js/timer.js',
+  './js/calendar.js',
+  './js/reader.js',
+  './js/app.js'
+];
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(ASSETS_TO_CACHE);
+    })
+  );
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) => {
+      return Promise.all(
+        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
+      );
+    })
+  );
+  self.clients.claim();
+});
+
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    caches.match(event.request).then((cachedResponse) => {
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+      return fetch(event.request).catch(() => {
+        // Fallback offline bila jaringan terputus
+        return caches.match('./index.html');
+      });
+    })
+  );
+});

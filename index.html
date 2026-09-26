@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Quran One Day One Page - Kalender Tilawah Kemenag RI</title>
+  
+  <!-- Meta & PWA Tags -->
+  <meta name="description" content="Aplikasi mobile Quran One Day One Page berbasis kalender dan Al-Qur'an bersumber resmi dari Kementerian Agama RI (quran.kemenag.go.id). Baca minimal 1 menit per hari untuk menandai silang tanggal kalender." />
+  <meta name="theme-color" content="#F89A7E" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Quran ODOP" />
+  <link rel="manifest" href="manifest.json" />
+
+  <!-- Font Resmi Mushaf Kemenag RI: LPMQ Isep Misbah -->
+  <link rel="preload" href="fonts/LPMQ-IsepMisbah.ttf" as="font" type="font/ttf" crossorigin />
+
+  <!-- Google Fonts: Plus Jakarta Sans untuk UI modern & fallback kaligrafi -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Amiri:ital,wght@0,400;0,700&display=swap" rel="stylesheet" />
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/calendar.css" />
+  <link rel="stylesheet" href="css/reader.css" />
+  <link rel="stylesheet" href="css/timer.css" />
+
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📖</text></svg>" />
+</head>
+<body>
+
+  <!-- Mobile App Frame Shell -->
+  <div class="mobile-app-shell">
+
+    <!-- Header Aplikasi -->
+    <header class="app-header">
+      <div class="header-top">
+        <div class="brand-wrapper">
+          <div class="brand-icon-box">📖</div>
+          <div>
+            <h1 class="brand-title">Quran ODOP</h1>
+            <div class="brand-subtitle">
+              <span>One Day One Page</span>
+              <span class="kemenag-pill">Kemenag RI</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <button class="btn-icon-header" id="btn-open-jump" title="Lompat ke Halaman Al-Qur'an (1-604)" aria-label="Lompat Halaman">
+            🔍
+          </button>
+          <button class="btn-icon-header" id="btn-open-settings" title="Pengaturan & Info" aria-label="Pengaturan">
+            ⚙️
+          </button>
+        </div>
+      </div>
+
+      <!-- Bar Navigasi Bulan & Hari Ini -->
+      <div class="header-month-bar">
+        <button class="btn-month-nav" id="btn-prev-month" title="Bulan Sebelumnya" aria-label="Bulan Sebelumnya">&#8249;</button>
+        <span class="current-month-title" id="current-month-display">Memuat Bulan...</span>
+        <button class="btn-month-nav" id="btn-next-month" title="Bulan Berikutnya" aria-label="Bulan Berikutnya">&#8250;</button>
+        <button class="btn-today-pill" id="btn-go-today">Hari Ini</button>
+      </div>
+
+      <!-- Garis Progres Khatam Bulanan -->
+      <div class="monthly-progress-track">
+        <div class="monthly-progress-fill" id="monthly-progress-bar"></div>
+      </div>
+    </header>
+
+    <!-- Main View Switcher -->
+    <main class="main-view-container">
+
+      <!-- =================================================================
+           Layar 1: Tampilan Kalender (Awal Buka Aplikasi)
+           ================================================================= -->
+      <section id="calendar-view" class="calendar-wrapper">
+        <!-- Banner Statistik Bulanan & Streak -->
+        <div class="calendar-stats-banner">
+          <div id="monthly-stats-display">
+            <span class="stats-badge">Memuat statistik...</span>
+          </div>
+          <div id="streak-display">
+            <span class="streak-badge"><span class="flame-icon">🔥</span> 0 Hari</span>
+          </div>
+        </div>
+
+        <!-- Opsi Tampilan Kalender (Bulanan, Mingguan, Harian) -->
+        <div class="calendar-view-mode-tabs">
+          <button class="cal-mode-btn active" id="btn-cal-mode-month">📅 Bulanan</button>
+          <button class="cal-mode-btn" id="btn-cal-mode-week">📆 Mingguan</button>
+          <button class="cal-mode-btn" id="btn-cal-mode-day">🗓️ Harian</button>
+        </div>
+
+        <!-- Kontainer Kalender (Dukungan Grid Bulanan, Baris Mingguan, dan Fokus Harian) -->
+        <div id="calendar-container"></div>
+      </section>
+
+      <!-- =================================================================
+           Layar 2: Tampilan Reader Halaman Al-Qur'an
+           ================================================================= -->
+      <section id="reader-view" class="reader-wrapper" style="display: none;">
+        <!-- Navigasi Atas Reader -->
+        <div class="reader-top-bar">
+          <button class="btn-back-calendar" id="btn-back-to-calendar">
+            <span>&#8592;</span> Kalender
+          </button>
+          <div class="reader-header-center">
+            <div class="reader-page-number" id="reader-page-title">Halaman 1</div>
+            <div class="reader-date-info" id="reader-date-info">Tanggal</div>
+          </div>
+          <a href="https://quran.kemenag.go.id" target="_blank" rel="noopener noreferrer" class="btn-kemenag-ext" id="kemenag-portal-link">
+            <span>Kemenag</span> ↗
+          </a>
+        </div>
+
+        <!-- Meta Tag: Nama Surat & Juz -->
+        <div class="reader-meta-pills">
+          <span class="reader-pill pill-surah" id="reader-surah-badge">Surah</span>
+          <span class="reader-pill pill-juz" id="reader-juz-badge">Juz 1</span>
+        </div>
+
+        <!-- Kontainer Ayat & Terjemahan Kemenag RI -->
+        <div id="text-container"></div>
+
+        <!-- Tombol Selesai Baca & Tandai Checklist (Langsung Ditampilkan di Akhir Halaman) -->
+        <div class="reader-completion-container" id="reader-completion-container">
+          <button class="btn-complete-reading btn-status-ready" id="btn-complete-reading">
+            <span class="btn-icon">✓</span>
+            <span>Selesai Baca & Tandai Checklist (✓)</span>
+          </button>
+        </div>
+
+        <!-- Navigasi Halaman Sebelumnya / Selanjutnya -->
+        <div class="reader-bottom-nav">
+          <button class="btn-page-nav" id="btn-reader-prev">
+            &#8592; Halaman Sebelumnya
+          </button>
+          <button class="btn-page-nav" id="btn-reader-next">
+            Halaman Selanjutnya &#8594;
+          </button>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- ===================================================================
+         Modal Pengaturan & Rujukan Resmi Kemenag
+         =================================================================== -->
+    <div class="modal-overlay" id="settings-modal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2 class="modal-title">Pengaturan</h2>
+          <button class="btn-close-modal" id="btn-close-settings">&times;</button>
+        </div>
+
+        <!-- Tab Pemilih Pengaturan (Program Tilawah & Tampilan Tema) -->
+        <div class="settings-modal-tabs">
+          <button type="button" class="settings-tab-btn active" id="tab-btn-settings-tilawah" data-tab="tilawah">
+            📖 Program Tilawah
+          </button>
+          <button type="button" class="settings-tab-btn" id="tab-btn-settings-theme" data-tab="theme">
+            🎨 Tampilan Tema
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <!-- Panel 1: Program Tilawah -->
+          <div class="settings-panel active" id="settings-panel-tilawah">
+            <form id="settings-form">
+              <div class="settings-group">
+                <label class="settings-label">Mode Alokasi Halaman Al-Qur'an:</label>
+                
+                <label class="settings-radio-option">
+                  <input type="radio" name="reading-mode" id="mode-continuous" value="continuous" checked />
+                  <div>
+                    <div class="radio-text-title">Khatam Berkelanjutan (Rekomendasi ODOP)</div>
+                    <div class="radio-text-desc">Halaman berlanjut hari demi hari antar bulan (misal 30 Sept: Hal. 30 &rarr; 1 Okt: Hal. 31 &rarr; 2 Okt: Hal. 32 ...) tanpa mengulang ke Hal. 1.</div>
+                  </div>
+                </label>
+
+                <label class="settings-radio-option">
+                  <input type="radio" name="reading-mode" id="mode-monthly" value="monthly" />
+                  <div>
+                    <div class="radio-text-title">Siklus Bulanan (Reset Tiap Bulan)</div>
+                    <div class="radio-text-desc">Setiap tanggal 1 awal bulan selalu kembali mengulang dari Halaman 1 (atau halaman awal yang ditentukan).</div>
+                  </div>
+                </label>
+              </div>
+
+              <div class="settings-group">
+                <label class="settings-label" for="setting-start-date">Tanggal Mulai Tilawah (Patokan Halaman Awal):</label>
+                <input type="date" id="setting-start-date" value="2026-09-01" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 10px; font-weight: 600; font-size: 0.95rem;" />
+                <span style="font-size: 0.76rem; color: var(--text-muted); display: block; margin-top: 4px;">Pada tanggal ini, tilawah dimulai dari nomor halaman di bawah ini.</span>
+              </div>
+
+              <div class="settings-group">
+                <label class="settings-label" for="setting-start-page">Mulai dari Halaman Al-Qur'an (1 - 604):</label>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                  <input type="number" id="setting-start-page" min="1" max="604" value="1" style="width: 100px; padding: 10px; border: 1px solid var(--border-color); border-radius: 10px; font-weight: 700; font-size: 1rem;" />
+                  <span style="font-size: 0.78rem; color: var(--text-muted);">Default: Halaman 1 (QS. Al-Fatihah).</span>
+                </div>
+              </div>
+
+              <div class="settings-group">
+                <label class="settings-label">Sumber Rujukan Resmi:</label>
+                <div style="background: #f8fafc; padding: 10px 12px; border-radius: 10px; border: 1px solid #e2e8f0; font-size: 0.8rem; line-height: 1.5;">
+                  <p><strong>Kementerian Agama Republik Indonesia</strong></p>
+                  <p>Lajnah Pentashihan Mushaf Al-Qur'an (LPMQ)</p>
+                  <a href="https://quran.kemenag.go.id" target="_blank" rel="noopener noreferrer" style="color: var(--primary-emerald); font-weight: 600; text-decoration: none; display: inline-block; margin-top: 4px;">
+                    Kunjungi https://quran.kemenag.go.id ↗
+                  </a>
+                </div>
+              </div>
+
+              <button type="submit" class="btn-action-primary">Simpan Pengaturan Tilawah</button>
+              <button type="button" class="btn-action-danger" id="btn-reset-data">Reset Riwayat Tilawah</button>
+            </form>
+          </div>
+
+          <!-- Panel 2: Tampilan Tema -->
+          <div class="settings-panel" id="settings-panel-theme" style="display: none;">
+            <div class="theme-selection-intro">
+              <p class="theme-intro-title">Pilih Tema Tampilan Aplikasi:</p>
+              <p class="theme-intro-desc">Sesuaikan palet warna header, tombol CTA, latar belakang mushaf, dan teks typografi.</p>
+            </div>
+
+            <div class="theme-cards-grid">
+              <!-- Tema 1: Coral Apricot -->
+              <label class="theme-card-option" id="card-theme-tema1">
+                <input type="radio" name="setting-theme-choice" value="tema1" checked />
+                <div class="theme-card-content">
+                  <div class="theme-card-header">
+                    <span class="theme-card-title">Coral Apricot</span>
+                    <span class="theme-card-badge badge-coral">Tema 1</span>
+                  </div>
+                  <div class="theme-swatches-row">
+                    <div class="theme-swatch" style="background: #F89A7E;" title="Header: Coral Apricot (#F89A7E)"></div>
+                    <div class="theme-swatch" style="background: #F9D154;" title="Accent/CTA: Bright Sun Gold (#F9D154)"></div>
+                    <div class="theme-swatch" style="background: #FFFDF2; border: 1px solid #e2e8f0;" title="Background: Warm Cream (#FFFDF2)"></div>
+                    <div class="theme-swatch" style="background: #2C221E;" title="Teks: Deep Charcoal (#2C221E)"></div>
+                  </div>
+                  <div class="theme-palette-specs">
+                    <span>Header: <b>#F89A7E</b></span> &bull; <span>CTA: <b>#F9D154</b></span><br/>
+                    <span>Mushaf: <b>#FFFDF2</b></span> &bull; <span>Teks: <b>#2C221E</b></span>
+                  </div>
+                </div>
+              </label>
+
+              <!-- Tema 2: Soft Blush -->
+              <label class="theme-card-option" id="card-theme-tema2">
+                <input type="radio" name="setting-theme-choice" value="tema2" />
+                <div class="theme-card-content">
+                  <div class="theme-card-header">
+                    <span class="theme-card-title">Soft Blush</span>
+                    <span class="theme-card-badge badge-soft-blush">Tema 2</span>
+                  </div>
+                  <div class="theme-swatches-row">
+                    <div class="theme-swatch" style="background: #EDBBCC;" title="Header: Soft Blush / Dusty Rose (#EDBBCC)"></div>
+                    <div class="theme-swatch" style="background: #F69C97;" title="Accent/CTA: Coral Pink (#F69C97)"></div>
+                    <div class="theme-swatch" style="background: #F1FAFF; border: 1px solid #cce5f8;" title="Background: Sky Ice White (#F1FAFF)"></div>
+                    <div class="theme-swatch" style="background: #1E293B;" title="Teks: Deep Navy Charcoal (#1E293B)"></div>
+                  </div>
+                  <div class="theme-palette-specs">
+                    <span>Header: <b>#EDBBCC</b></span> &bull; <span>CTA: <b>#F69C97</b></span><br/>
+                    <span>Mushaf: <b>#F1FAFF</b></span> &bull; <span>Teks: <b>#1E293B</b></span>
+                  </div>
+                </div>
+              </label>
+
+              <!-- Tema 3: Cyan Fresh -->
+              <label class="theme-card-option" id="card-theme-tema_cyan">
+                <input type="radio" name="setting-theme-choice" value="tema_cyan" />
+                <div class="theme-card-content">
+                  <div class="theme-card-header">
+                    <span class="theme-card-title">Cyan Fresh</span>
+                    <span class="theme-card-badge badge-cyan">Tema 3</span>
+                  </div>
+                  <div class="theme-swatches-row">
+                    <div class="theme-swatch" style="background: #58C4CF;" title="Header: Cyan Fresh (#58C4CF)"></div>
+                    <div class="theme-swatch" style="background: #F2B84B;" title="Accent/CTA: Warm Sun Gold (#F2B84B)"></div>
+                    <div class="theme-swatch" style="background: #FAF8F5; border: 1px solid #e2e8f0;" title="Background: Soft Ivory (#FAF8F5)"></div>
+                    <div class="theme-swatch" style="background: #1E293B;" title="Teks: Dark Slate (#1E293B)"></div>
+                  </div>
+                  <div class="theme-palette-specs">
+                    <span>Header: <b>#58C4CF</b></span> &bull; <span>CTA: <b>#F2B84B</b></span><br/>
+                    <span>Mushaf: <b>#FAF8F5</b></span> &bull; <span>Teks: <b>#1E293B</b></span>
+                  </div>
+                </div>
+              </label>
+            </div>
+
+            <button type="button" class="btn-action-primary" id="btn-save-theme" style="margin-top: 6px;">
+              ✓ Terapkan & Simpan Tema
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================================================================
+         Modal Lompat Cepat ke Halaman (1 - 604)
+         =================================================================== -->
+    <div class="modal-overlay" id="jump-modal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2 class="modal-title">Lompat ke Halaman Al-Qur'an</h2>
+          <button class="btn-close-modal" id="btn-close-jump">&times;</button>
+        </div>
+        <div class="modal-body">
+          <form id="jump-page-form">
+            <div class="settings-group">
+              <label class="settings-label" for="jump-page-input">Masukkan Nomor Halaman (1 s/d 604):</label>
+              <div style="display: flex; gap: 8px;">
+                <input type="number" id="jump-page-input" min="1" max="604" placeholder="Misal: 211" required style="flex: 1; padding: 12px; border: 1px solid var(--border-color); border-radius: 12px; font-size: 1.1rem; font-weight: 700;" />
+                <button type="submit" class="btn-action-primary" style="width: auto; padding: 12px 20px;">Buka</button>
+              </div>
+            </div>
+
+            <div class="settings-group">
+              <label class="settings-label">Pintasan Cepat:</label>
+              <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                <button type="button" class="btn-pill-shortcut" onclick="App.jumpToSpecificPage(1)">Hal. 1 (Al-Fatihah)</button>
+                <button type="button" class="btn-pill-shortcut" onclick="App.jumpToSpecificPage(211)">Hal. 211 (Yunus 21-25)</button>
+                <button type="button" class="btn-pill-shortcut" onclick="App.jumpToSpecificPage(50)">Hal. 50 (Ali 'Imran)</button>
+                <button type="button" class="btn-pill-shortcut" onclick="App.jumpToSpecificPage(604)">Hal. 604 (An-Nas)</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- JavaScript Modules -->
+  <script src="js/quran-data.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/timer.js"></script>
+  <script src="js/calendar.js"></script>
+  <script src="js/reader.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>
