@@ -3,7 +3,7 @@
  * Cache offline app shell
  */
 
-const CACHE_NAME = 'quran-odop-v9';
+const CACHE_NAME = 'quran-odop-v10';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
