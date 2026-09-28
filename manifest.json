@@ -1,11 +1,11 @@
 {
-  "name": "Quran One Day One Page - Kemenag RI",
-  "short_name": "Quran ODOP",
-  "description": "Aplikasi Tilawah Al-Qur'an 1 Halaman per Hari dengan Kalender Interaktif dan Teks Standar Kemenag RI.",
+  "name": "One Page Quran - Kemenag RI",
+  "short_name": "One Page Quran",
+  "description": "Aplikasi Tilawah Al-Qur'an 1 Halaman per Hari (One Day One Page) dengan Kalender Interaktif dan Teks Standar Kemenag RI.",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#FAF8F5",
-  "theme_color": "#F89A7E",
+  "theme_color": "#58C4CF",
   "orientation": "portrait",
   "icons": [
     {

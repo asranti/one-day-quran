@@ -100,7 +100,7 @@
 
 .calendar-cell:hover {
   border-color: var(--primary-cyan);
-  box-shadow: 0 4px 12px rgba(248, 154, 126, 0.25);
+  box-shadow: 0 4px 12px var(--shadow-primary, rgba(88, 196, 207, 0.25));
 }
 
 /* Kotak Kosong (Hari sebelum tgl 1) */
@@ -275,15 +275,77 @@
 }
 
 /* ==========================================================================
-   Opsi Pemilih Tampilan Kalender (Bulanan, Mingguan, Harian)
+   Opsi Pemilih Tampilan Kalender (Bulanan, Mingguan, Harian) & Switcher Kalender
    ========================================================================== */
 .calendar-view-mode-tabs {
   display: flex;
-  background: #fdf4f0;
+  background: var(--primary-cyan-tint, #f0fafb);
   border-radius: 12px;
   padding: 3px;
   gap: 4px;
   margin-top: 4px;
+  width: 100%;
+}
+
+.cal-type-badge-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  color: var(--text-main);
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  line-height: 1.2;
+}
+
+.cal-type-badge-btn:hover {
+  background: rgba(255, 255, 255, 0.8);
+  transform: translateY(-1px);
+}
+
+.cal-type-badge-btn:active {
+  transform: scale(0.96);
+}
+
+.cal-type-badge-btn.badge-active-hijri {
+  background: var(--accent-gold, #F2B84B);
+  border-color: #d99e30;
+  color: var(--text-main);
+  box-shadow: 0 1px 4px rgba(242, 184, 75, 0.35);
+}
+
+.cell-sub-date {
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  opacity: 0.88;
+  white-space: nowrap;
+}
+
+.cell-today .cell-sub-date {
+  color: var(--primary-cyan-deep);
+  font-weight: 700;
+}
+
+.week-day-sub {
+  font-size: 0.58rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  line-height: 1;
+  margin-top: 2px;
+}
+
+.card-today .week-day-sub {
+  color: var(--text-main);
+  opacity: 0.9;
 }
 
 .cal-mode-btn {
@@ -334,7 +396,7 @@
 
 .week-day-card:hover {
   border-color: var(--primary-cyan);
-  box-shadow: 0 4px 12px rgba(248, 154, 126, 0.25);
+  box-shadow: 0 4px 12px var(--shadow-primary, rgba(88, 196, 207, 0.25));
 }
 
 .week-day-card.card-today {
@@ -490,7 +552,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8px 24px rgba(248, 154, 126, 0.35);
+  box-shadow: 0 8px 24px var(--shadow-primary, rgba(88, 196, 207, 0.35));
   border: none;
 }
 

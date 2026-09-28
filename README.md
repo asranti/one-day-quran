@@ -1,6 +1,7 @@
-# Quran One Day One Page (ODOP) 📖
+# One Page Quran 📖
+> **One Day One Page Quran Tilawah App**
 
-Aplikasi mobile tilawah Al-Qur'an harian yang memadukan **Kalender Bulanan** dan **Mushaf Al-Qur'an 604 Halaman**, bersumber resmi dari **Kementerian Agama Republik Indonesia ([quran.kemenag.go.id](https://quran.kemenag.go.id/))**.
+Aplikasi mobile tilawah Al-Qur'an harian (1 Halaman per Hari) yang memadukan **Kalender Interaktif (Masehi & Hijriah)** dan **Mushaf Al-Qur'an 604 Halaman**, bersumber resmi dari **Kementerian Agama Republik Indonesia ([quran.kemenag.go.id](https://quran.kemenag.go.id/))**.
 
 ---
 
@@ -11,16 +12,24 @@ Aplikasi mobile tilawah Al-Qur'an harian yang memadukan **Kalender Bulanan** dan
    - Setiap kotak tanggal dialokasikan **1 halaman Al-Qur'an** secara sistematis (dari QS. Al-Fatihah hingga QS. An-Nas).
    - Menampilkan nomor tanggal, nomor halaman Al-Qur'an, nama surat, serta nomor Juz.
 
-2. **Tanda checklist pada Kotak Tanggal**:
-   - Setelah menekan tombol selesai membaca, kotak tanggal yang bersangkutan otomatis diberi **tanda checklist** tebal dan elegan.
+2. **Aturan Tilawah Minimal 1 Menit**:
+   - Menegakkan komitmen membaca minimal **60 detik** per halaman.
+   - Dilengkapi widget timer interaktif dengan circular progress ring dan countdown detik.
+   - Tombol penyelesaian terkunci (disabled) sebelum mencapai 60 detik.
+   - Jika pengguna mencoba keluar sebelum 1 menit, sistem menampilkan konfirmasi peringatan agar tilawah tidak terputus sia-sia.
+   - Begitu 60 detik terlampaui, nada melodi lembut berbunyi dan tombol penyelesaian otomatis terbuka dengan animasi perayaan.
+
+3. **Tanda Silang (✕) pada Kotak Tanggal**:
+   - Setelah menekan tombol selesai membaca, kotak tanggal yang bersangkutan otomatis diberi **tanda silang (✕)** tebal dan elegan.
    - Status tersimpan secara permanen di LocalStorage perangkat dan menghitung streak berturut-turut serta progress bulanan.
 
-3. **Sumber Resmi Al-Qur'an: Kementerian Agama RI**:
+4. **Sumber Resmi Al-Qur'an: Kementerian Agama RI**:
    - Rasm Utsmani Standar Mushaf Indonesia (LPMQ Kemenag RI).
    - Terjemahan resmi Al-Qur'an Kemenag RI.
    - Tombol verifikasi tashih langsung ke portal resmi `https://quran.kemenag.go.id/`.
+   - Dual-Mode tampilan: **Mushaf Standar** dan **Ayat & Terjemahan Kemenag RI**.
 
-4. **Mobile-First & PWA (Progressive Web App)**:
+5. **Mobile-First & PWA (Progressive Web App)**:
    - Dapat diinstal langsung ke homescreen smartphone (Add to Home Screen) di Android dan iOS tanpa perlu unduh dari Play Store / App Store.
    - Bekerja secara responsif dan offline-ready dengan Service Worker.
 

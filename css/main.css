@@ -23,19 +23,19 @@
 }
 
 :root {
-  /* 1. Header / Navigation Bar: Coral #F89A7E */
-  --primary-cyan: #F89A7E;
-  --primary-cyan-dark: #e07f62;
-  --primary-cyan-deep: #b35639;
-  --primary-cyan-light: #fde8e1;
-  --primary-cyan-tint: #fdf4f0;
+  /* 1. Header / Navigation Bar: Cyan Fresh #58C4CF */
+  --primary-cyan: #58C4CF;
+  --primary-cyan-dark: #3aa8b4;
+  --primary-cyan-deep: #1b7a85;
+  --primary-cyan-light: #e4f7f9;
+  --primary-cyan-tint: #f0fafb;
 
   /* Aliases untuk kompatibilitas */
-  --primary-blush: #F89A7E;
-  --primary-coral: #F89A7E;
-  --primary-emerald: #F89A7E;
-  --primary-light: #e07f62;
-  --primary-tint: #fdf4f0;
+  --primary-blush: #58C4CF;
+  --primary-coral: #58C4CF;
+  --primary-emerald: #58C4CF;
+  --primary-light: #3aa8b4;
+  --primary-tint: #f0fafb;
   
   /* 2. CTA Button / Checklist / Streak: Warm Sun Gold */
   --accent-gold: #F2B84B;
@@ -65,16 +65,16 @@
   
   /* Borders & Shadows */
   --border-color: #e2e8f0;
-  --border-cyan: #F89A7E;
+  --border-cyan: #58C4CF;
   --border-gold: #F2B84B;
-  --border-blush: #F89A7E;
+  --border-blush: #58C4CF;
   --border-pink: #F2B84B;
-  --border-coral: #F89A7E;
+  --border-coral: #58C4CF;
   
   --shadow-sm: 0 1px 3px 0 rgba(30, 41, 59, 0.05);
   --shadow-md: 0 4px 10px -1px rgba(30, 41, 59, 0.07), 0 2px 5px -1px rgba(30, 41, 59, 0.04);
   --shadow-lg: 0 10px 20px -3px rgba(30, 41, 59, 0.1), 0 4px 8px -2px rgba(30, 41, 59, 0.05);
-  --shadow-card: 0 4px 20px -2px rgba(248, 154, 126, 0.22);
+  --shadow-card: 0 4px 20px -2px rgba(88, 196, 207, 0.22);
 
   --font-arabic: 'LPMQ IsepMisbah', 'Amiri', 'Traditional Arabic', 'Scheherazade New', serif;
   --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -260,34 +260,46 @@ body {
 }
 
 .brand-icon-box {
-  width: 40px;
-  height: 40px;
-  background: rgba(255, 255, 255, 0.45);
-  backdrop-filter: blur(8px);
+  width: 42px;
+  height: 42px;
+  background: #ffffff;
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
-  border: 1px solid rgba(255, 255, 255, 0.65);
-  color: var(--text-main);
+  border: 1.5px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  padding: 3px;
+  flex-shrink: 0;
+}
+
+.brand-icon-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+  display: block;
 }
 
 .brand-title {
   font-size: 1.15rem;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: -0.01em;
   line-height: 1.2;
   color: var(--text-main);
+  white-space: nowrap;
 }
 
 .brand-subtitle {
-  font-size: 0.72rem;
-  opacity: 0.9;
+  font-size: 0.70rem;
+  font-weight: 500;
+  opacity: 0.95;
   color: #334155;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
+  white-space: nowrap;
 }
 
 .kemenag-pill {
@@ -333,11 +345,21 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 6px;
   background: rgba(255, 255, 255, 0.4);
   border: 1px solid rgba(255, 255, 255, 0.55);
   border-radius: 14px;
-  padding: 6px 12px;
+  padding: 5px 8px;
   margin-top: 4px;
+}
+
+.header-month-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
 }
 
 .btn-month-nav {
@@ -345,14 +367,15 @@ body {
   border: none;
   color: var(--text-main);
   font-size: 18px;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: background 0.15s ease;
+  flex-shrink: 0;
 }
 
 .btn-month-nav:hover {
@@ -360,10 +383,14 @@ body {
 }
 
 .current-month-title {
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 700;
   letter-spacing: 0.01em;
   color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
 }
 
 .btn-today-pill {
@@ -376,6 +403,8 @@ body {
   cursor: pointer;
   font-weight: 700;
   transition: background 0.15s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .btn-today-pill:hover {

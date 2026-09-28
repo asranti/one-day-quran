@@ -81,7 +81,8 @@ const StorageManager = {
       mode: 'continuous', // Default: Khatam 604 Halaman Berkelanjutan tanpa reset bulanan
       startDate: '2026-09-01', // Patokan tanggal mulai One Day One Page
       startPageOffset: 1, // Halaman Al-Qur'an pada tanggal mulai (1 = Al-Fatihah)
-      theme: 'tema1', // 'tema1' (Coral) | 'tema2' (Biru / Sky Ice) | 'tema_cyan' (Biru Cyan)
+      calendarType: 'gregorian', // 'gregorian' (Kalender Masehi) | 'hijri' (Kalender Hijriah)
+      theme: 'tema_cyan', // Default: Cyan Fresh (#58C4CF)
       soundEnabled: true,
       nightMode: false
     };
@@ -102,8 +103,11 @@ const StorageManager = {
       if (!parsed.startPageOffset || parsed.startPageOffset < 1) {
         parsed.startPageOffset = 1;
       }
-      if (!parsed.theme) {
-        parsed.theme = 'tema1';
+      if (!parsed.explicitTheme) {
+        parsed.theme = 'tema_cyan';
+      }
+      if (!parsed.calendarType) {
+        parsed.calendarType = 'gregorian';
       }
       return { ...defaults, ...parsed };
     } catch (e) {

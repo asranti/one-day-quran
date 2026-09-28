@@ -1,16 +1,16 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" data-theme="tema_cyan">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>Quran One Day One Page - Kalender Tilawah Kemenag RI</title>
+  <title>One Page Quran - Kalender Tilawah Kemenag RI</title>
   
   <!-- Meta & PWA Tags -->
-  <meta name="description" content="Aplikasi mobile Quran One Day One Page berbasis kalender dan Al-Qur'an bersumber resmi dari Kementerian Agama RI (quran.kemenag.go.id). Baca minimal 1 menit per hari untuk menandai silang tanggal kalender." />
-  <meta name="theme-color" content="#F89A7E" />
+  <meta name="description" content="Aplikasi mobile One Page Quran (One Day One Page) berbasis kalender dan Al-Qur'an bersumber resmi dari Kementerian Agama RI (quran.kemenag.go.id)." />
+  <meta name="theme-color" content="#58C4CF" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Quran ODOP" />
+  <meta name="apple-mobile-web-app-title" content="One Page Quran" />
   <link rel="manifest" href="manifest.json" />
 
   <!-- Font Resmi Mushaf Kemenag RI: LPMQ Isep Misbah -->
@@ -27,8 +27,9 @@
   <link rel="stylesheet" href="css/reader.css" />
   <link rel="stylesheet" href="css/timer.css" />
 
-  <!-- Favicon -->
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📖</text></svg>" />
+  <!-- Favicon & App Icons -->
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="assets/icons/icon-192.png" />
 </head>
 <body>
 
@@ -39,11 +40,13 @@
     <header class="app-header">
       <div class="header-top">
         <div class="brand-wrapper">
-          <div class="brand-icon-box">📖</div>
+          <div class="brand-icon-box">
+            <img src="assets/icons/icon-192.png" alt="One Page Quran" class="brand-icon-img" />
+          </div>
           <div>
-            <h1 class="brand-title">Quran ODOP</h1>
+            <h1 class="brand-title">One Page Quran</h1>
             <div class="brand-subtitle">
-              <span>One Day One Page</span>
+              <span>One Day One Page Quran</span>
               <span class="kemenag-pill">Kemenag RI</span>
             </div>
           </div>
@@ -61,9 +64,16 @@
 
       <!-- Bar Navigasi Bulan & Hari Ini -->
       <div class="header-month-bar">
-        <button class="btn-month-nav" id="btn-prev-month" title="Bulan Sebelumnya" aria-label="Bulan Sebelumnya">&#8249;</button>
-        <span class="current-month-title" id="current-month-display">Memuat Bulan...</span>
-        <button class="btn-month-nav" id="btn-next-month" title="Bulan Berikutnya" aria-label="Bulan Berikutnya">&#8250;</button>
+        <button type="button" class="cal-type-badge-btn" id="btn-toggle-cal-type" title="Beralih Cepat Jenis Kalender (Masehi / Hijriah)">
+          <span id="cal-type-badge-label">🌙 Hijriah</span>
+        </button>
+
+        <div class="header-month-center">
+          <button class="btn-month-nav" id="btn-prev-month" title="Bulan Sebelumnya" aria-label="Bulan Sebelumnya">&#8249;</button>
+          <span class="current-month-title" id="current-month-display">Memuat Bulan...</span>
+          <button class="btn-month-nav" id="btn-next-month" title="Bulan Berikutnya" aria-label="Bulan Berikutnya">&#8250;</button>
+        </div>
+
         <button class="btn-today-pill" id="btn-go-today">Hari Ini</button>
       </div>
 
@@ -194,6 +204,26 @@
               </div>
 
               <div class="settings-group">
+                <label class="settings-label">Pilihan Jenis Kalender:</label>
+                
+                <label class="settings-radio-option" id="opt-cal-type-gregorian">
+                  <input type="radio" name="calendar-type" id="cal-type-gregorian" value="gregorian" checked />
+                  <div>
+                    <div class="radio-text-title">📅 Kalender Masehi (Miladiyah)</div>
+                    <div class="radio-text-desc">Sistem kalender standar nasional (Januari - Desember). Menggunakan penomoran tanggal Masehi.</div>
+                  </div>
+                </label>
+
+                <label class="settings-radio-option" id="opt-cal-type-hijri">
+                  <input type="radio" name="calendar-type" id="cal-type-hijri" value="hijri" />
+                  <div>
+                    <div class="radio-text-title">🌙 Kalender Hijriah (Qamariyah)</div>
+                    <div class="radio-text-desc">Sistem penanggalan Islam (Muharram - Zulhijah). Menggunakan penomoran tanggal Hijriah.</div>
+                  </div>
+                </label>
+              </div>
+
+              <div class="settings-group">
                 <label class="settings-label" for="setting-start-date">Tanggal Mulai Tilawah (Patokan Halaman Awal):</label>
                 <input type="date" id="setting-start-date" value="2026-09-01" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 10px; font-weight: 600; font-size: 0.95rem;" />
                 <span style="font-size: 0.76rem; color: var(--text-muted); display: block; margin-top: 4px;">Pada tanggal ini, tilawah dimulai dari nomor halaman di bawah ini.</span>
@@ -233,7 +263,7 @@
             <div class="theme-cards-grid">
               <!-- Tema 1: Coral Apricot -->
               <label class="theme-card-option" id="card-theme-tema1">
-                <input type="radio" name="setting-theme-choice" value="tema1" checked />
+                <input type="radio" name="setting-theme-choice" value="tema1" />
                 <div class="theme-card-content">
                   <div class="theme-card-header">
                     <span class="theme-card-title">Coral Apricot</span>
@@ -274,8 +304,8 @@
               </label>
 
               <!-- Tema 3: Cyan Fresh -->
-              <label class="theme-card-option" id="card-theme-tema_cyan">
-                <input type="radio" name="setting-theme-choice" value="tema_cyan" />
+              <label class="theme-card-option active" id="card-theme-tema_cyan">
+                <input type="radio" name="setting-theme-choice" value="tema_cyan" checked />
                 <div class="theme-card-content">
                   <div class="theme-card-header">
                     <span class="theme-card-title">Cyan Fresh</span>

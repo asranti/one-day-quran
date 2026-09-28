@@ -95,8 +95,8 @@
 }
 
 .pill-surah {
-  background: var(--primary-cyan-light, #fde8e1);
-  border-color: var(--primary-cyan, #F89A7E);
+  background: var(--primary-cyan-light, #e4f7f9);
+  border-color: var(--primary-cyan, #58C4CF);
   color: var(--text-main);
 }
 
@@ -314,7 +314,7 @@
    Mode Tampilan 2: Ayat & Terjemahan Kemenag RI (Presisi Khusus Halaman Ini)
    ========================================================================== */
 .page-summary-header-card {
-  background: linear-gradient(135deg, var(--primary-cyan, #F89A7E) 0%, var(--primary-cyan-dark, #e07f62) 100%);
+  background: linear-gradient(135deg, var(--primary-cyan, #58C4CF) 0%, var(--primary-cyan-dark, #3aa8b4) 100%);
   color: var(--text-main, #1E293B);
   border-radius: 16px;
   padding: 18px 16px;
@@ -469,8 +469,8 @@
   color: var(--text-main, #1E293B);
   text-decoration: none;
   font-weight: 700;
-  background: var(--primary-cyan-light, #fde8e1);
-  border: 1px solid var(--primary-cyan, #F89A7E);
+  background: var(--primary-cyan-light, #e4f7f9);
+  border: 1px solid var(--primary-cyan, #58C4CF);
   padding: 2px 7px;
   border-radius: 4px;
   transition: all 0.15s ease;
@@ -512,8 +512,8 @@
 .spinner {
   width: 32px;
   height: 32px;
-  border: 3.5px solid rgba(248, 154, 126, 0.25);
-  border-top-color: var(--primary-cyan, #F89A7E);
+  border: 3.5px solid rgba(88, 196, 207, 0.25);
+  border-top-color: var(--primary-cyan, #58C4CF);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -548,6 +548,6 @@
 }
 
 .btn-page-nav:hover {
-  background: var(--primary-cyan-light, #fde8e1);
-  border-color: var(--primary-cyan, #F89A7E);
+  background: var(--primary-cyan-light, #e4f7f9);
+  border-color: var(--primary-cyan, #58C4CF);
 }

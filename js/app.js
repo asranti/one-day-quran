@@ -11,7 +11,7 @@ const App = {
 
     // Inisialisasi tema tampilan tersimpan
     const settings = StorageManager.getSettings();
-    this.applyTheme(settings.theme || 'tema1');
+    this.applyTheme(settings.theme || 'tema_cyan');
 
     // Inisialisasi komponen kalender & reader
     CalendarController.init('calendar-container');
@@ -93,8 +93,8 @@ const App = {
     const btnSaveTheme = document.getElementById('btn-save-theme');
     if (btnSaveTheme) {
       btnSaveTheme.addEventListener('click', () => {
-        const selected = document.querySelector('input[name="setting-theme-choice"]:checked')?.value || 'tema1';
-        this.applyTheme(selected);
+        const selected = document.querySelector('input[name="setting-theme-choice"]:checked')?.value || 'tema_cyan';
+        this.applyTheme(selected, true);
         if (settingsModal) settingsModal.classList.remove('active');
         this.showToast('Tema tampilan berhasil disimpan!', 'success');
       });
@@ -140,13 +140,19 @@ const App = {
       settingsForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const mode = document.querySelector('input[name="reading-mode"]:checked')?.value || 'continuous';
+        const calendarType = document.querySelector('input[name="calendar-type"]:checked')?.value || 'gregorian';
         const startDate = document.getElementById('setting-start-date')?.value || '2026-09-01';
         const startPageOffset = parseInt(document.getElementById('setting-start-page')?.value, 10) || 1;
         const explicitMonthly = (mode === 'monthly');
-        StorageManager.saveSettings({ mode, startDate, startPageOffset, explicitMonthly });
+        StorageManager.saveSettings({ mode, startDate, startPageOffset, explicitMonthly, calendarType });
+        if (typeof CalendarController.setCalendarType === 'function') {
+          CalendarController.setCalendarType(calendarType);
+        } else {
+          CalendarController.calendarType = calendarType;
+          CalendarController.render();
+        }
         settingsModal.classList.remove('active');
-        CalendarController.render();
-        this.showToast('Pengaturan tilawah berhasil disimpan!', 'success');
+        this.showToast('Pengaturan kalender & tilawah berhasil disimpan!', 'success');
       });
     }
 
@@ -214,19 +220,21 @@ const App = {
   /**
    * Terapkan tema warna aplikasi secara menyeluruh
    */
-  applyTheme(themeName) {
+  applyTheme(themeName, explicit = false) {
     document.documentElement.setAttribute('data-theme', themeName);
     const metaTheme = document.querySelector('meta[name="theme-color"]');
     if (metaTheme) {
       if (themeName === 'tema2') {
         metaTheme.setAttribute('content', '#EDBBCC');
-      } else if (themeName === 'tema_cyan') {
-        metaTheme.setAttribute('content', '#58C4CF');
-      } else {
+      } else if (themeName === 'tema1') {
         metaTheme.setAttribute('content', '#F89A7E');
+      } else {
+        metaTheme.setAttribute('content', '#58C4CF');
       }
     }
-    StorageManager.saveSettings({ theme: themeName });
+    const updateObj = { theme: themeName };
+    if (explicit) updateObj.explicitTheme = true;
+    StorageManager.saveSettings(updateObj);
     this.updateActiveThemeCard(themeName);
   },
 
@@ -269,8 +277,16 @@ const App = {
       inputStartPage.value = settings.startPageOffset || 1;
     }
 
+    const radioGregorian = document.getElementById('cal-type-gregorian');
+    const radioHijri = document.getElementById('cal-type-hijri');
+    if (settings.calendarType === 'hijri' && radioHijri) {
+      radioHijri.checked = true;
+    } else if (radioGregorian) {
+      radioGregorian.checked = true;
+    }
+
     // Set nilai radio & kartu tema aktif
-    const currentTheme = settings.theme || 'tema1';
+    const currentTheme = settings.theme || 'tema_cyan';
     this.updateActiveThemeCard(currentTheme);
   },
 
