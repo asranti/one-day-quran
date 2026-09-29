@@ -17,6 +17,9 @@ const App = {
     CalendarController.init('calendar-container');
     ReaderController.init();
 
+    // Inisialisasi navigasi riwayat browser (tombol back HP / browser)
+    this.initHistoryNavigation();
+
     // Event listeners navigasi global
     this.bindGlobalEvents();
 
@@ -24,7 +27,7 @@ const App = {
     this.initServiceWorker();
 
     // Tampilkan layar awal (Kalender)
-    this.showScreen('calendar');
+    this.showScreen('calendar', false);
   },
 
   bindGlobalEvents() {
@@ -197,9 +200,61 @@ const App = {
   },
 
   /**
-   * Beralih antara tampilan Kalender dan Reader
+   * Inisialisasi sinkronisasi navigasi riwayat browser / tombol back HP (History API)
    */
-  showScreen(screenName) {
+  initHistoryNavigation() {
+    try {
+      if (window.location.hash === '#reader') {
+        window.history.replaceState({ screen: 'calendar' }, '', window.location.pathname + window.location.search);
+      } else {
+        window.history.replaceState({ screen: 'calendar' }, '', window.location.pathname + window.location.search);
+      }
+    } catch (e) {
+      if (window.console && window.console.warn) {
+        window.console.warn('replaceState warning:', e);
+      }
+    }
+
+    // Tangani tombol back pada HP / browser
+    window.addEventListener('popstate', (event) => {
+      this.handlePopState(event);
+    });
+
+    // Fallback hashchange
+    window.addEventListener('hashchange', () => {
+      if (this.currentScreen === 'reader' && window.location.hash !== '#reader') {
+        this.showScreen('calendar', false);
+      }
+    });
+  },
+
+  /**
+   * Handler saat pengguna menekan tombol back HP / browser
+   */
+  handlePopState(event) {
+    // Tutup modal jika ada yang terbuka
+    const settingsModal = document.getElementById('settings-modal');
+    const jumpModal = document.getElementById('jump-modal');
+    if (settingsModal && settingsModal.classList.contains('active')) {
+      settingsModal.classList.remove('active');
+    }
+    if (jumpModal && jumpModal.classList.contains('active')) {
+      jumpModal.classList.remove('active');
+    }
+
+    // Jika saat ini di layar reader, kembali ke layar kalender
+    if (this.currentScreen === 'reader') {
+      this.showScreen('calendar', false);
+    }
+  },
+
+  /**
+   * Beralih antara tampilan Kalender dan Reader
+   * @param {string} screenName 'calendar' atau 'reader'
+   * @param {boolean} updateHistory sinkronkan ke history browser untuk tombol back HP (default: true)
+   */
+  showScreen(screenName, updateHistory = true) {
+    const prevScreen = this.currentScreen;
     this.currentScreen = screenName;
     const calendarView = document.getElementById('calendar-view');
     const readerView = document.getElementById('reader-view');
@@ -208,10 +263,37 @@ const App = {
       if (calendarView) calendarView.style.display = 'block';
       if (readerView) readerView.style.display = 'none';
       window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      // Jika kembali ke kalender melalui tombol UI reader dan ada entri reader di history,
+      // lakukan history.back() agar riwayat kembali bersih
+      if (updateHistory && prevScreen === 'reader') {
+        if (window.location.hash === '#reader' || (window.history.state && window.history.state.screen === 'reader')) {
+          try {
+            window.history.back();
+          } catch (e) {
+            if (window.console && window.console.warn) window.console.warn('history.back warning:', e);
+          }
+        }
+      }
     } else if (screenName === 'reader') {
       if (calendarView) calendarView.style.display = 'none';
       if (readerView) readerView.style.display = 'block';
       window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      // Tambahkan entri riwayat saat membuka reader agar tombol back HP kembali ke kalender
+      if (updateHistory) {
+        if (window.location.hash !== '#reader' || !window.history.state || window.history.state.screen !== 'reader') {
+          try {
+            window.history.pushState({ screen: 'reader' }, '', '#reader');
+          } catch (e) {
+            try {
+              window.location.hash = 'reader';
+            } catch (hErr) {
+              if (window.console && window.console.warn) window.console.warn('hash setting warning:', hErr);
+            }
+          }
+        }
+      }
     }
   },
 
@@ -367,7 +449,7 @@ const App = {
    * Inisialisasi Service Worker PWA
    */
   initServiceWorker() {
-    if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
+    if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('sw.js')
           .then(reg => console.log('Service Worker terdaftar:', reg.scope))
