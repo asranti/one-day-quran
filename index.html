@@ -62,24 +62,19 @@
         </div>
       </div>
 
-      <!-- Bar Navigasi Bulan & Hari Ini -->
-      <div class="header-month-bar">
-        <button type="button" class="cal-type-badge-btn" id="btn-toggle-cal-type" title="Beralih Cepat Jenis Kalender (Masehi / Hijriah)">
-          <span id="cal-type-badge-label">🌙 Hijriah</span>
-        </button>
-
-        <div class="header-month-center">
-          <button class="btn-month-nav" id="btn-prev-month" title="Bulan Sebelumnya" aria-label="Bulan Sebelumnya">&#8249;</button>
-          <span class="current-month-title" id="current-month-display">Memuat Bulan...</span>
-          <button class="btn-month-nav" id="btn-next-month" title="Bulan Berikutnya" aria-label="Bulan Berikutnya">&#8250;</button>
-        </div>
-
-        <button class="btn-today-pill" id="btn-go-today">Hari Ini</button>
-      </div>
-
       <!-- Garis Progres Khatam Bulanan -->
       <div class="monthly-progress-track">
         <div class="monthly-progress-fill" id="monthly-progress-bar"></div>
+      </div>
+
+      <!-- 1 Baris Progres (Jumlah, Persentase Bulan Ini & Hari Berturut-turut) -->
+      <div class="calendar-stats-banner">
+        <div id="monthly-stats-display">
+          <span class="stats-badge">Memuat statistik...</span>
+        </div>
+        <div id="streak-display">
+          <span class="streak-badge"><span class="flame-icon">🔥</span> 0 Hari</span>
+        </div>
       </div>
     </header>
 
@@ -90,14 +85,19 @@
            Layar 1: Tampilan Kalender (Awal Buka Aplikasi)
            ================================================================= -->
       <section id="calendar-view" class="calendar-wrapper">
-        <!-- Banner Statistik Bulanan & Streak -->
-        <div class="calendar-stats-banner">
-          <div id="monthly-stats-display">
-            <span class="stats-badge">Memuat statistik...</span>
+        <!-- Bar Navigasi Bulan & Hari Ini -->
+        <div class="header-month-bar">
+          <button type="button" class="cal-type-badge-btn" id="btn-toggle-cal-type" title="Beralih Cepat Jenis Kalender (Masehi / Hijriah)">
+            <span id="cal-type-badge-label">🌙 Hijriah</span>
+          </button>
+
+          <div class="header-month-center">
+            <button class="btn-month-nav" id="btn-prev-month" title="Bulan Sebelumnya" aria-label="Bulan Sebelumnya">&#8249;</button>
+            <span class="current-month-title" id="current-month-display">Memuat Bulan...</span>
+            <button class="btn-month-nav" id="btn-next-month" title="Bulan Berikutnya" aria-label="Bulan Berikutnya">&#8250;</button>
           </div>
-          <div id="streak-display">
-            <span class="streak-badge"><span class="flame-icon">🔥</span> 0 Hari</span>
-          </div>
+
+          <button class="btn-today-pill" id="btn-go-today">Hari Ini</button>
         </div>
 
         <!-- Opsi Tampilan Kalender (Bulanan, Mingguan, Harian) -->

@@ -239,7 +239,7 @@ body {
 .app-header {
   background: linear-gradient(135deg, var(--primary-cyan) 0%, var(--primary-cyan-dark) 100%);
   color: var(--text-main);
-  padding: 18px 20px 20px;
+  padding: 16px 20px 14px;
   position: sticky;
   top: 0;
   z-index: 50;
@@ -250,7 +250,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 6px;
 }
 
 .brand-wrapper {
@@ -345,45 +345,45 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 6px;
-  background: rgba(255, 255, 255, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.55);
+  gap: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
   border-radius: 14px;
-  padding: 5px 8px;
-  margin-top: 4px;
+  padding: 8px 12px;
+  box-shadow: var(--shadow-sm);
 }
 
 .header-month-center {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 4px;
   flex: 1;
   min-width: 0;
 }
 
 .btn-month-nav {
-  background: transparent;
-  border: none;
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--border-color);
   color: var(--text-main);
   font-size: 18px;
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: all 0.15s ease;
   flex-shrink: 0;
 }
 
 .btn-month-nav:hover {
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba(0, 0, 0, 0.08);
 }
 
 .current-month-title {
-  font-size: 0.95rem;
+  font-size: 0.96rem;
   font-weight: 700;
   letter-spacing: 0.01em;
   color: var(--text-main);
@@ -395,20 +395,21 @@ body {
 
 .btn-today-pill {
   font-size: 0.72rem;
-  background: rgba(255, 255, 255, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.65);
+  background: var(--primary-cyan-tint, rgba(88, 196, 207, 0.15));
+  border: 1px solid var(--primary-cyan, #58C4CF);
   color: var(--text-main);
-  padding: 4px 10px;
+  padding: 5px 12px;
   border-radius: 20px;
   cursor: pointer;
   font-weight: 700;
-  transition: background 0.15s ease;
+  transition: all 0.15s ease;
   white-space: nowrap;
   flex-shrink: 0;
 }
 
 .btn-today-pill:hover {
-  background: rgba(255, 255, 255, 0.8);
+  background: var(--primary-cyan, #58C4CF);
+  color: #ffffff;
 }
 
 /* Progress Bar di Bawah Header */
@@ -417,7 +418,7 @@ body {
   height: 5px;
   background: rgba(30, 41, 59, 0.12);
   border-radius: 3px;
-  margin-top: 10px;
+  margin-top: 6px;
   overflow: hidden;
 }
 
@@ -625,23 +626,25 @@ body {
 }
 
 /* ==========================================================================
-   Toast Notification
+   Toast Notification (Bottom Banner Seukuran Lebar Layar Sesuai Tema CTA)
    ========================================================================== */
 .app-toast {
   position: fixed;
-  bottom: 24px;
+  bottom: 0;
   left: 50%;
-  transform: translateX(-50%) translateY(100px);
+  width: 100%;
+  max-width: 480px;
+  transform: translateX(-50%) translateY(100%);
   background: #1f2937;
   color: #ffffff;
-  padding: 12px 20px;
-  border-radius: 30px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
-  z-index: 200;
+  padding: 16px 20px calc(16px + env(safe-area-inset-bottom, 0px));
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.22);
+  z-index: 999;
   opacity: 0;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  max-width: 90%;
-  font-size: 0.88rem;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  font-size: 0.90rem;
+  box-sizing: border-box;
 }
 
 .app-toast.toast-show {
@@ -649,20 +652,47 @@ body {
   opacity: 1;
 }
 
+/* Notifikasi Selesai Baca & Sukses: Warna Sesuai Tema Bagian CTA */
 .app-toast.toast-success {
-  background: #065f46;
-  border: 1px solid #10b981;
+  background: linear-gradient(135deg, var(--accent-gold, #F2B84B) 0%, var(--accent-gold-hover, #e0a638) 100%);
+  color: var(--text-main, #1E293B);
+  border-top: 2px solid rgba(255, 255, 255, 0.45);
+  box-shadow: 0 -8px 28px rgba(242, 184, 75, 0.4);
+}
+
+.app-toast.toast-info {
+  background: linear-gradient(135deg, var(--primary-cyan, #58C4CF) 0%, var(--primary-cyan-dark, #3aa8b4) 100%);
+  color: var(--text-main, #1E293B);
+  border-top: 2px solid rgba(255, 255, 255, 0.45);
+  box-shadow: 0 -8px 28px rgba(88, 196, 207, 0.35);
 }
 
 .toast-content {
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+  gap: 12px;
+  text-align: center;
 }
 
 .toast-icon {
-  font-weight: bold;
-  font-size: 16px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(30, 41, 59, 0.12);
+  color: var(--text-main, #1E293B);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.toast-msg {
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--text-main, #1E293B);
 }
 
 /* ==========================================================================

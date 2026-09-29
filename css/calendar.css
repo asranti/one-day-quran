@@ -9,46 +9,50 @@
   gap: 12px;
 }
 
-/* Banner Statistik Tilawah Bulanan */
+/* Banner Statistik Tilawah Bulanan (di dalam Header) */
 .calendar-stats-banner {
-  background: var(--bg-card);
-  border-radius: 16px;
-  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(8px);
+  border-radius: 12px;
+  padding: 6px 12px;
+  margin-top: 8px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border: 1px solid var(--border-color);
-  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
 }
 
 .stats-badge {
-  font-size: 0.85rem;
-  font-weight: 500;
+  font-size: 0.78rem;
+  font-weight: 600;
   color: var(--text-main);
+  white-space: nowrap;
 }
 
 .stats-num {
   font-weight: 800;
-  color: var(--accent-gold-dark);
-  font-size: 1.05rem;
+  color: var(--text-main);
+  font-size: 0.95rem;
 }
 
 .streak-badge {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   background: var(--accent-gold);
   border: 1px solid #d99e30;
-  padding: 4px 12px;
+  padding: 3px 10px;
   border-radius: 20px;
-  font-size: 0.8rem;
+  font-size: 0.74rem;
   font-weight: 800;
   color: var(--text-main);
-  box-shadow: 0 2px 6px rgba(242, 184, 75, 0.4);
+  box-shadow: 0 2px 6px rgba(242, 184, 75, 0.35);
+  white-space: nowrap;
 }
 
 .flame-icon {
-  font-size: 15px;
+  font-size: 14px;
 }
 
 /* Header Nama Hari (Ahad - Sabtu) */
@@ -292,10 +296,10 @@
   align-items: center;
   justify-content: center;
   gap: 3px;
-  background: rgba(255, 255, 255, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.65);
+  background: var(--primary-cyan-tint, rgba(88, 196, 207, 0.15));
+  border: 1px solid var(--primary-cyan, #58C4CF);
   color: var(--text-main);
-  padding: 4px 10px;
+  padding: 5px 10px;
   border-radius: 20px;
   font-size: 0.72rem;
   font-weight: 700;
@@ -307,8 +311,8 @@
 }
 
 .cal-type-badge-btn:hover {
-  background: rgba(255, 255, 255, 0.8);
-  transform: translateY(-1px);
+  background: var(--primary-cyan, #58C4CF);
+  color: #ffffff;
 }
 
 .cal-type-badge-btn:active {
