@@ -1,7 +1,7 @@
-# One Page Quran 📖
-> **One Day One Page Quran Tilawah App**
+# One Day Quran 📖
+> **One Day Quran Tilawah App**
 
-Aplikasi mobile tilawah Al-Qur'an harian (1 Halaman per Hari) yang memadukan **Kalender Interaktif (Masehi & Hijriah)** dan **Mushaf Al-Qur'an 604 Halaman**, bersumber resmi dari **Kementerian Agama Republik Indonesia ([quran.kemenag.go.id](https://quran.kemenag.go.id/))**.
+Aplikasi mobile tilawah Al-Qur'an harian yang memadukan **Kalender Interaktif (Masehi & Hijriah)** dan **Mushaf Al-Qur'an 604 Halaman**, bersumber resmi dari **Kementerian Agama Republik Indonesia ([quran.kemenag.go.id](https://quran.kemenag.go.id/))**.
 
 ---
 
