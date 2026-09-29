@@ -40,13 +40,14 @@ const StorageManager = {
   },
 
   /**
-   * Tandai tanggal selesai dibaca (berikan tanda silang)
+   * Tandai tanggal selesai dibaca (berikan tanda checklist)
    */
-  markDateCompleted(dateStr, page, duration) {
+  markDateCompleted(dateStr, page, duration, endPage = null) {
     const history = this.getHistory();
     history[dateStr] = {
       isCompleted: true,
       page: page,
+      endPage: endPage || page,
       duration: Math.max(60, duration || 60),
       completedAt: new Date().toISOString()
     };
@@ -81,6 +82,7 @@ const StorageManager = {
       mode: 'continuous', // Default: Khatam 604 Halaman Berkelanjutan tanpa reset bulanan
       startDate: '2026-09-01', // Patokan tanggal mulai One Day One Page
       startPageOffset: 1, // Halaman Al-Qur'an pada tanggal mulai (1 = Al-Fatihah)
+      pagesPerDay: 1, // Jumlah halaman per hari (1 - 20)
       calendarType: 'gregorian', // 'gregorian' (Kalender Masehi) | 'hijri' (Kalender Hijriah)
       theme: 'tema_cyan', // Default: Cyan Fresh (#58C4CF)
       soundEnabled: true,
@@ -103,6 +105,8 @@ const StorageManager = {
       if (!parsed.startPageOffset || parsed.startPageOffset < 1) {
         parsed.startPageOffset = 1;
       }
+      const ppd = parseInt(parsed.pagesPerDay, 10);
+      parsed.pagesPerDay = (!isNaN(ppd) && ppd >= 1 && ppd <= 30) ? ppd : 1;
       if (!parsed.explicitTheme) {
         parsed.theme = 'tema_cyan';
       }

@@ -1,7 +1,7 @@
 {
-  "name": "One Page Quran - Kemenag RI",
-  "short_name": "One Page Quran",
-  "description": "Aplikasi Tilawah Al-Qur'an 1 Halaman per Hari (One Day One Page) dengan Kalender Interaktif dan Teks Standar Kemenag RI.",
+  "name": "One Day Quran - Kemenag RI",
+  "short_name": "One Day Quran",
+  "description": "Aplikasi Tilawah Al-Qur'an (One Day Quran) dengan Kalender Interaktif dan Teks Standar Kemenag RI.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

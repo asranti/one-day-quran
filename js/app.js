@@ -134,6 +134,31 @@ const App = {
       });
     }
 
+    // Slider Jumlah Halaman Tilawah Tiap Hari
+    const sliderPages = document.getElementById('setting-pages-per-day');
+    const badgePages = document.getElementById('pages-per-day-badge');
+    const descPages = document.getElementById('pages-per-day-desc');
+
+    const updateSliderDisplay = (val) => {
+      const v = parseInt(val, 10) || 1;
+      let label = `${v} Halaman / Hari`;
+      if (v === 2) label += ' (1 Lembar)';
+      if (v === 10) label += ' (½ Juz)';
+      if (v === 20) label += ' (1 Juz)';
+      if (badgePages) badgePages.textContent = label;
+
+      const daysNeeded = Math.ceil(604 / v);
+      const monthsNeeded = (daysNeeded / 30).toFixed(1);
+      if (descPages) {
+        descPages.innerHTML = `${v} Halaman per hari &bull; Khatam dalam <strong>~${daysNeeded} hari</strong> (~${monthsNeeded} bulan)`;
+      }
+    };
+
+    if (sliderPages) {
+      sliderPages.addEventListener('input', (e) => updateSliderDisplay(e.target.value));
+      sliderPages.addEventListener('change', (e) => updateSliderDisplay(e.target.value));
+    }
+
     // Form Pengaturan Simpan (Program Tilawah)
     const settingsForm = document.getElementById('settings-form');
     if (settingsForm) {
@@ -143,8 +168,9 @@ const App = {
         const calendarType = document.querySelector('input[name="calendar-type"]:checked')?.value || 'gregorian';
         const startDate = document.getElementById('setting-start-date')?.value || '2026-09-01';
         const startPageOffset = parseInt(document.getElementById('setting-start-page')?.value, 10) || 1;
+        const pagesPerDay = parseInt(document.getElementById('setting-pages-per-day')?.value, 10) || 1;
         const explicitMonthly = (mode === 'monthly');
-        StorageManager.saveSettings({ mode, startDate, startPageOffset, explicitMonthly, calendarType });
+        StorageManager.saveSettings({ mode, startDate, startPageOffset, pagesPerDay, explicitMonthly, calendarType });
         if (typeof CalendarController.setCalendarType === 'function') {
           CalendarController.setCalendarType(calendarType);
         } else {
@@ -192,9 +218,9 @@ const App = {
   /**
    * Buka reader dari klik kotak tanggal kalender
    */
-  openReader(dateKey, pageNumber, day, monthName, year) {
+  openReader(dateKey, pageNumber, day, monthName, year, endPage = null) {
     this.showScreen('reader');
-    ReaderController.open(dateKey, pageNumber, day, monthName, year);
+    ReaderController.open(dateKey, pageNumber, day, monthName, year, endPage);
   },
 
   /**
@@ -213,7 +239,7 @@ const App = {
     if (jumpModal) jumpModal.classList.remove('active');
 
     this.showScreen('reader');
-    ReaderController.open(todayKey, pageNumber, day, monthName, year);
+    ReaderController.open(todayKey, pageNumber, day, monthName, year, pageNumber);
     this.showToast(`Membuka Halaman ${pageNumber}...`, 'info');
   },
 
@@ -262,6 +288,9 @@ const App = {
     const radioContinuous = document.getElementById('mode-continuous');
     const inputStartDate = document.getElementById('setting-start-date');
     const inputStartPage = document.getElementById('setting-start-page');
+    const sliderPages = document.getElementById('setting-pages-per-day');
+    const badgePages = document.getElementById('pages-per-day-badge');
+    const descPages = document.getElementById('pages-per-day-desc');
 
     if (settings.mode === 'monthly' && radioMonthly) {
       radioMonthly.checked = true;
@@ -275,6 +304,22 @@ const App = {
 
     if (inputStartPage) {
       inputStartPage.value = settings.startPageOffset || 1;
+    }
+
+    const ppdVal = parseInt(settings.pagesPerDay, 10) || 1;
+    if (sliderPages) {
+      sliderPages.value = ppdVal;
+      let label = `${ppdVal} Halaman / Hari`;
+      if (ppdVal === 2) label += ' (1 Lembar)';
+      if (ppdVal === 10) label += ' (½ Juz)';
+      if (ppdVal === 20) label += ' (1 Juz)';
+      if (badgePages) badgePages.textContent = label;
+
+      const daysNeeded = Math.ceil(604 / ppdVal);
+      const monthsNeeded = (daysNeeded / 30).toFixed(1);
+      if (descPages) {
+        descPages.innerHTML = `${ppdVal} Halaman per hari &bull; Khatam dalam <strong>~${daysNeeded} hari</strong> (~${monthsNeeded} bulan)`;
+      }
     }
 
     const radioGregorian = document.getElementById('cal-type-gregorian');

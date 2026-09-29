@@ -249,6 +249,80 @@ const QURAN_DATA = {
     };
   },
 
+  /**
+   * Dapatkan ringkasan gabungan ayat & surat untuk rentang halaman (misal 1 s/d 2)
+   */
+  getPageRangeSummary(startPage, endPage) {
+    const sP = Math.max(1, Math.min(604, startPage));
+    const eP = Math.max(1, Math.min(604, endPage || startPage));
+
+    if (sP === eP) {
+      const b = this.getPageBoundary(sP);
+      return {
+        ...b,
+        startPage: sP,
+        endPage: eP,
+        pageCount: 1,
+        juzStart: b.juz,
+        juzEnd: b.juz,
+        juzText: `Juz ${b.juz}`,
+        isRange: false
+      };
+    }
+
+    const bStart = this.getPageBoundary(sP);
+    const bEnd = this.getPageBoundary(eP);
+
+    const juzStart = bStart.juz;
+    const juzEnd = bEnd.juz;
+    const juzText = (juzStart === juzEnd) ? `Juz ${juzStart}` : `Juz ${juzStart} - ${juzEnd}`;
+
+    let summary = '';
+    let shortSummary = '';
+
+    // Jika halaman awal dan akhir berada dalam surat yang sama
+    if (bStart.primarySurahNumber === bEnd.primarySurahNumber) {
+      const sName = bStart.primarySurahName;
+      const startAyah = bStart.startAyah || 1;
+      const endAyah = bEnd.endAyah || bEnd.startAyah || 1;
+      summary = `QS. ${sName} (Ayat ${startAyah} - ${endAyah})`;
+      shortSummary = `${sName}: ${startAyah}-${endAyah}`;
+    } else {
+      // Menyeberang surat (misal Al-Fatihah hal 1 ke Al-Baqarah hal 2)
+      const sName1 = bStart.primarySurahName;
+      const aStart1 = bStart.startAyah || 1;
+      const aEnd1 = bStart.endAyah || '';
+      const sName2 = bEnd.primarySurahName;
+      const aStart2 = bEnd.startAyah || 1;
+      const aEnd2 = bEnd.endAyah || '';
+
+      const pageCount = (eP >= sP) ? (eP - sP + 1) : 1;
+      if (pageCount <= 3) {
+        const p1 = aEnd1 ? `${aStart1}-${aEnd1}` : `${aStart1}`;
+        const p2 = aEnd2 ? `${aStart2}-${aEnd2}` : `${aStart2}`;
+        summary = `QS. ${sName1} (${p1}) & QS. ${sName2} (${p2})`;
+        shortSummary = `${sName1} & ${sName2}`;
+      } else {
+        summary = `QS. ${sName1} (${aStart1}) s/d QS. ${sName2} (${aEnd2 || aStart2})`;
+        shortSummary = `${sName1} s/d ${sName2}`;
+      }
+    }
+
+    return {
+      startPage: sP,
+      endPage: eP,
+      pageCount: (eP >= sP) ? (eP - sP + 1) : 1,
+      juzStart,
+      juzEnd,
+      juzText,
+      primarySurahNumber: bStart.primarySurahNumber,
+      primarySurahName: bStart.primarySurahName,
+      summary,
+      shortSummary,
+      isRange: true
+    };
+  },
+
   getJuzByPage(pageNumber) {
     const p = Math.max(1, Math.min(604, pageNumber));
     const JUZ_STARTS = [
@@ -459,6 +533,76 @@ const QURAN_DATA = {
 
     // LAYER 5: Fallback Informatif Presisi
     return this.getFallbackPageData(p, boundary);
+  },
+
+  /**
+   * Mengambil data ayat gabungan untuk rentang halaman (misal Hal. 1 - 2, 1 - 5, dst)
+   * Menggabungkan ayat secara berkesinambungan tanpa pemisah buatan
+   */
+  async fetchPageRangeData(startPage, endPage) {
+    const sP = Math.max(1, Math.min(604, startPage));
+    const eP = Math.max(1, Math.min(604, endPage || startPage));
+
+    let pages = [];
+    if (eP >= sP) {
+      for (let p = sP; p <= eP; p++) pages.push(p);
+    } else {
+      // Siklus melewati 604
+      for (let p = sP; p <= 604; p++) pages.push(p);
+      for (let p = 1; p <= eP; p++) pages.push(p);
+    }
+
+    // Ambil data seluruh halaman secara paralel
+    const pagesData = await Promise.all(pages.map(p => this.fetchPageData(p)));
+
+    // Gabungkan seluruh groups surat & ayat secara berkesinambungan
+    const mergedGroups = [];
+    let currentGroup = null;
+
+    pagesData.forEach((pData, pIdx) => {
+      const pageNum = pages[pIdx];
+      if (!pData || !pData.groups) return;
+
+      pData.groups.forEach(g => {
+        if (currentGroup && currentGroup.surahNumber === g.surahNumber) {
+          // Surat sama: gabungkan ayat ke dalam kelompok yang sedang berjalan
+          const existingAyahNums = new Set(currentGroup.ayat.map(a => a.nomorAyat));
+          g.ayat.forEach(a => {
+            if (!existingAyahNums.has(a.nomorAyat)) {
+              currentGroup.ayat.push({ ...a, page: a.page || pageNum });
+              existingAyahNums.add(a.nomorAyat);
+            }
+          });
+        } else {
+          // Surat baru: buat kelompok surat baru
+          currentGroup = {
+            surahNumber: g.surahNumber,
+            surahName: g.surahName,
+            arabicName: g.arabicName,
+            translation: g.translation,
+            revelation: g.revelation,
+            ayat: g.ayat.map(a => ({ ...a, page: a.page || pageNum }))
+          };
+          mergedGroups.push(currentGroup);
+        }
+      });
+    });
+
+    const rangeMeta = this.getPageRangeSummary(sP, eP);
+    const totalAyat = mergedGroups.reduce((acc, g) => acc + g.ayat.length, 0);
+
+    return {
+      startPage: sP,
+      endPage: eP,
+      pageCount: pages.length,
+      juz: rangeMeta.juzText || `Juz ${rangeMeta.juzStart || rangeMeta.juz || 1}`,
+      titleSummary: rangeMeta.summary,
+      primarySurahNumber: rangeMeta.primarySurahNumber,
+      primarySurahName: rangeMeta.primarySurahName,
+      groups: mergedGroups,
+      totalAyat: totalAyat,
+      isRange: sP !== eP
+    };
   },
 
   /**

@@ -87,7 +87,7 @@
   border: 1px solid var(--border-color);
   border-radius: 12px;
   min-height: 74px;
-  padding: 6px 5px;
+  padding: 6px 4px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -182,11 +182,35 @@
   word-break: normal;
 }
 
+.page-badge.page-range {
+  font-size: 0.54rem;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.page-badge .page-line {
+  display: block;
+  white-space: nowrap;
+  line-height: 1.15;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .juz-label {
-  font-size: 0.62rem;
+  font-size: 0.54rem;
   font-weight: 500;
   color: var(--text-muted);
   line-height: 1.15;
+  white-space: nowrap;
+  letter-spacing: -0.02em;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.juz-label.juz-range {
+  font-size: 0.46rem;
+  letter-spacing: -0.03em;
 }
 
 /* ==========================================================================
@@ -214,7 +238,6 @@
 
 .cell-completed .juz-label {
   color: #8c6b45;
-  font-size: 0.62rem;
 }
 
 .cell-today.cell-completed {
@@ -558,6 +581,15 @@
   justify-content: center;
   box-shadow: 0 8px 24px var(--shadow-primary, rgba(88, 196, 207, 0.35));
   border: none;
+  transition: all 0.2s ease;
+}
+
+.daily-page-emblem.emblem-wide {
+  width: auto;
+  min-width: 120px;
+  height: auto;
+  padding: 12px 20px;
+  border-radius: 28px;
 }
 
 .emblem-label {
@@ -575,6 +607,11 @@
   font-weight: 900;
   line-height: 1;
   color: var(--text-main);
+}
+
+.emblem-number.emblem-range {
+  font-size: 1.5rem;
+  letter-spacing: -0.02em;
 }
 
 .daily-quran-detail {

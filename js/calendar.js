@@ -301,34 +301,48 @@ const CalendarController = {
   },
 
   /**
-   * Hitung nomor halaman Quran untuk tanggal tertentu
+   * Hitung rentang halaman Quran untuk tanggal tertentu berdasarkan target harian
    */
-  calculateQuranPage(year, month, day) {
+  calculateQuranPageRange(year, month, day) {
     const settings = StorageManager.getSettings();
     const startPage = parseInt(settings.startPageOffset, 10) || 1;
-    
+    const pagesPerDay = parseInt(settings.pagesPerDay, 10) || 1;
+
+    let dayOffset = 0;
     if (settings.mode === 'monthly') {
-      // Siklus bulanan: Reset tiap tanggal 1
-      let page = ((startPage - 1 + (day - 1)) % 604) + 1;
-      return page > 0 ? page : 1;
+      dayOffset = (day - 1) * pagesPerDay;
+    } else {
+      let startDateStr = settings.startDate || '2026-09-01';
+      let parts = startDateStr.split('-').map(Number);
+      let sYear = parts[0] || 2026;
+      let sMonth = (parts[1] || 9) - 1; // 0-indexed month
+      let sDay = parts[2] || 1;
+
+      // Perhitungan selisih hari murni UTC agar terbebas dari pergeseran jam/zona waktu
+      const baseUtc = Date.UTC(sYear, sMonth, sDay);
+      const targetUtc = Date.UTC(year, month, day);
+      const diffDays = Math.round((targetUtc - baseUtc) / (1000 * 60 * 60 * 24));
+      dayOffset = diffDays * pagesPerDay;
     }
 
-    // Default: Mode Berkelanjutan (Khatam 604 Halaman One Day One Page)
-    // Menggunakan patokan startDate (default: '2026-09-01' -> 1 Sept = Hal. 1)
-    let startDateStr = settings.startDate || '2026-09-01';
-    let parts = startDateStr.split('-').map(Number);
-    let sYear = parts[0] || 2026;
-    let sMonth = (parts[1] || 9) - 1; // 0-indexed month
-    let sDay = parts[2] || 1;
-
-    // Perhitungan selisih hari murni UTC agar terbebas dari pergeseran jam/zona waktu
-    const baseUtc = Date.UTC(sYear, sMonth, sDay);
-    const targetUtc = Date.UTC(year, month, day);
-    const diffDays = Math.round((targetUtc - baseUtc) / (1000 * 60 * 60 * 24));
-
     // Rumus siklus berkelanjutan modulo 604 (1 s/d 604)
-    let page = (((startPage - 1 + diffDays) % 604) + 604) % 604 + 1;
-    return page > 0 ? page : 1;
+    let startP = (((startPage - 1 + dayOffset) % 604) + 604) % 604 + 1;
+    let endP = (((startP - 1 + (pagesPerDay - 1)) % 604) + 604) % 604 + 1;
+
+    return {
+      startPage: startP > 0 ? startP : 1,
+      endPage: endP > 0 ? endP : 1,
+      pagesPerDay: pagesPerDay,
+      isRange: pagesPerDay > 1
+    };
+  },
+
+  /**
+   * Hitung nomor halaman Quran awal untuk tanggal tertentu (kompatibilitas backward)
+   */
+  calculateQuranPage(year, month, day) {
+    const range = this.calculateQuranPageRange(year, month, day);
+    return range.startPage;
   },
 
   /**
@@ -407,9 +421,17 @@ const CalendarController = {
       const record = StorageManager.getDateRecord(dateKey);
       const isToday = isCurrentMonth && day === todayDate;
 
-      const quranPage = record ? record.page : this.calculateQuranPage(year, month, day);
-      const boundary = QURAN_DATA.getPageBoundary(quranPage);
-      const juz = boundary.juz;
+      const pageRange = this.calculateQuranPageRange(year, month, day);
+      const startP = (record && record.page) ? record.page : pageRange.startPage;
+      const endP = (record && record.endPage) ? record.endPage : ((record && record.page) ? record.page : pageRange.endPage);
+      const isRange = startP !== endP;
+      const rangeData = QURAN_DATA.getPageRangeSummary(startP, endP);
+      const pageLabel = isRange
+        ? `<span class="page-line">Hal. ${startP}-</span><span class="page-line">Hal. ${endP}</span>`
+        : `Hal. ${startP}`;
+      const isJuzRange = rangeData.juzStart && rangeData.juzEnd && (rangeData.juzStart !== rangeData.juzEnd);
+      const juzLabel = isJuzRange ? `Juz ${rangeData.juzStart}-${rangeData.juzEnd}` : (rangeData.juzText || `Juz ${rangeData.juzStart || rangeData.juz || 1}`);
+      const isBadgeRange = isRange || startP >= 100;
       const hInfo = this.getHijriInfo(cellDate);
 
       if (isCompleted) completedCountInMonth++;
@@ -417,17 +439,17 @@ const CalendarController = {
       const cell = document.createElement('div');
       cell.className = `calendar-cell ${isToday ? 'cell-today' : ''} ${isCompleted ? 'cell-completed' : ''}`;
       cell.setAttribute('data-date', dateKey);
-      cell.setAttribute('data-page', quranPage);
+      cell.setAttribute('data-page', startP);
+      if (isRange) cell.setAttribute('data-end-page', endP);
 
-      const isHundreds = quranPage >= 100;
       cell.innerHTML = `
         <div class="cell-top-bar">
           ${isToday ? '<span class="today-badge">Hari ini</span>' : `<span class="cell-day-number">${day}</span>`}
         </div>
         
         <div class="cell-quran-info">
-          <span class="page-badge ${isHundreds ? 'page-hundreds' : ''}">Hal. ${quranPage}</span>
-          <span class="juz-label">Juz ${juz}</span>
+          <span class="page-badge ${isBadgeRange ? 'page-range' : ''}" title="${rangeData.summary}">${pageLabel}</span>
+          <span class="juz-label ${isJuzRange ? 'juz-range' : ''}" title="${rangeData.juzText || juzLabel}">${juzLabel}</span>
         </div>
 
         ${isCompleted ? `
@@ -441,7 +463,7 @@ const CalendarController = {
 
       cell.addEventListener('click', () => {
         if (window.App) {
-          window.App.openReader(dateKey, quranPage, day, this.MONTH_NAMES[month], year);
+          window.App.openReader(dateKey, startP, day, this.MONTH_NAMES[month], year, endP);
         }
       });
 
@@ -499,26 +521,34 @@ const CalendarController = {
       const record = StorageManager.getDateRecord(dateKey);
       const isToday = dateKey === todayStr;
 
-      const quranPage = record ? record.page : this.calculateQuranPage(dayObj.gregorianYear, dayObj.gregorianMonth, dayObj.gregorianDay);
-      const boundary = QURAN_DATA.getPageBoundary(quranPage);
-      const juz = boundary.juz;
+      const pageRange = this.calculateQuranPageRange(dayObj.gregorianYear, dayObj.gregorianMonth, dayObj.gregorianDay);
+      const startP = (record && record.page) ? record.page : pageRange.startPage;
+      const endP = (record && record.endPage) ? record.endPage : ((record && record.page) ? record.page : pageRange.endPage);
+      const isRange = startP !== endP;
+      const rangeData = QURAN_DATA.getPageRangeSummary(startP, endP);
+      const pageLabel = isRange
+        ? `<span class="page-line">Hal. ${startP}-</span><span class="page-line">Hal. ${endP}</span>`
+        : `Hal. ${startP}`;
+      const isJuzRange = rangeData.juzStart && rangeData.juzEnd && (rangeData.juzStart !== rangeData.juzEnd);
+      const juzLabel = isJuzRange ? `Juz ${rangeData.juzStart}-${rangeData.juzEnd}` : (rangeData.juzText || `Juz ${rangeData.juzStart || rangeData.juz || 1}`);
+      const isBadgeRange = isRange || startP >= 100;
 
       if (isCompleted) completedCountInMonth++;
 
       const cell = document.createElement('div');
       cell.className = `calendar-cell ${isToday ? 'cell-today' : ''} ${isCompleted ? 'cell-completed' : ''}`;
       cell.setAttribute('data-date', dateKey);
-      cell.setAttribute('data-page', quranPage);
+      cell.setAttribute('data-page', startP);
+      if (isRange) cell.setAttribute('data-end-page', endP);
 
-      const isHundreds = quranPage >= 100;
       cell.innerHTML = `
         <div class="cell-top-bar">
           ${isToday ? '<span class="today-badge">Hari ini</span>' : `<span class="cell-day-number">${dayObj.hijriDay}</span>`}
         </div>
         
         <div class="cell-quran-info">
-          <span class="page-badge ${isHundreds ? 'page-hundreds' : ''}">Hal. ${quranPage}</span>
-          <span class="juz-label">Juz ${juz}</span>
+          <span class="page-badge ${isBadgeRange ? 'page-range' : ''}" title="${rangeData.summary}">${pageLabel}</span>
+          <span class="juz-label ${isJuzRange ? 'juz-range' : ''}" title="${rangeData.juzText || juzLabel}">${juzLabel}</span>
         </div>
 
         ${isCompleted ? `
@@ -532,7 +562,7 @@ const CalendarController = {
 
       cell.addEventListener('click', () => {
         if (window.App) {
-          window.App.openReader(dateKey, quranPage, dayObj.hijriDay, hData.monthName, `${hData.hijriYear} H`);
+          window.App.openReader(dateKey, startP, dayObj.hijriDay, hData.monthName, `${hData.hijriYear} H`, endP);
         }
       });
 
@@ -596,9 +626,13 @@ const CalendarController = {
       const record = StorageManager.getDateRecord(dateKey);
       const isToday = dateKey === todayStr;
 
-      const quranPage = record ? record.page : this.calculateQuranPage(dYear, dMonth, dDay);
-      const boundary = QURAN_DATA.getPageBoundary(quranPage);
-      const isMulti = boundary.summary && (boundary.summary.includes('&') || boundary.isMulti);
+      const pageRange = this.calculateQuranPageRange(dYear, dMonth, dDay);
+      const startP = (record && record.page) ? record.page : pageRange.startPage;
+      const endP = (record && record.endPage) ? record.endPage : ((record && record.page) ? record.page : pageRange.endPage);
+      const isRange = startP !== endP;
+      const rangeData = QURAN_DATA.getPageRangeSummary(startP, endP);
+      const pageTitle = isRange ? `Halaman ${startP} - ${endP}` : `Halaman ${startP}`;
+      const juzLabel = rangeData.juzText || `Juz ${rangeData.juzStart || rangeData.juz || 1}`;
 
       if (isCompleted) completedInWeek++;
 
@@ -615,10 +649,10 @@ const CalendarController = {
           </div>
           <div class="week-card-info">
             <div class="week-page-title">
-              <span>Halaman ${quranPage}</span>
+              <span>${pageTitle}</span>
               ${isToday ? '<span class="today-badge">Hari Ini</span>' : ''}
             </div>
-            <div class="week-quran-range ${isMulti ? 'multi-surah' : ''}">${boundary.summary} &bull; Juz ${boundary.juz}</div>
+            <div class="week-quran-range">${juzLabel}</div>
           </div>
         </div>
 
@@ -635,9 +669,9 @@ const CalendarController = {
       card.addEventListener('click', () => {
         if (window.App) {
           if (isHijri) {
-            window.App.openReader(dateKey, quranPage, hInfo.day, hInfo.monthName, `${hInfo.year} H`);
+            window.App.openReader(dateKey, startP, hInfo.day, hInfo.monthName, `${hInfo.year} H`, endP);
           } else {
-            window.App.openReader(dateKey, quranPage, dDay, this.MONTH_NAMES[dMonth], dYear);
+            window.App.openReader(dateKey, startP, dDay, this.MONTH_NAMES[dMonth], dYear, endP);
           }
         }
       });
@@ -680,8 +714,11 @@ const CalendarController = {
       }
     }
 
-    const quranPage = record ? record.page : this.calculateQuranPage(dYear, dMonth, dDay);
-    const boundary = QURAN_DATA.getPageBoundary(quranPage);
+    const pageRange = this.calculateQuranPageRange(dYear, dMonth, dDay);
+    const startP = (record && record.page) ? record.page : pageRange.startPage;
+    const endP = (record && record.endPage) ? record.endPage : ((record && record.page) ? record.page : pageRange.endPage);
+    const isRange = startP !== endP;
+    const rangeData = QURAN_DATA.getPageRangeSummary(startP, endP);
 
     const dayView = document.createElement('div');
     dayView.className = 'calendar-day-view';
@@ -690,9 +727,10 @@ const CalendarController = {
     const dailyCard = document.createElement('div');
     dailyCard.className = 'daily-focus-card';
 
-    const isMultiDay = boundary.summary && (boundary.summary.includes('&') || boundary.isMulti);
-    const isMultiCompact = isMultiDay && (boundary.summary.length > 45 || (boundary.sections && boundary.sections.length >= 3));
-    const dayDetailClass = isMultiCompact ? 'multi-surah-compact' : (isMultiDay ? 'multi-surah' : '');
+    const emblemClass = isRange ? 'daily-page-emblem emblem-wide' : 'daily-page-emblem';
+    const emblemNumClass = isRange ? 'emblem-number emblem-range' : 'emblem-number';
+    const emblemText = isRange ? `${startP} - ${endP}` : `${startP}`;
+    const targetSubtext = isRange ? `${pageRange.pagesPerDay} Halaman / Hari &bull; ` : '';
 
     const dateDisplayText = isHijri
       ? `${dayNameLong}, ${hInfo.day} ${hInfo.monthName} ${hInfo.year} H`
@@ -703,14 +741,13 @@ const CalendarController = {
         ${isToday ? '🌟 Hari Ini • ' : ''}${dateDisplayText}
       </div>
 
-      <div class="daily-page-emblem">
+      <div class="${emblemClass}">
         <span class="emblem-label">HALAMAN</span>
-        <span class="emblem-number">${quranPage}</span>
+        <span class="${emblemNumClass}">${emblemText}</span>
       </div>
 
       <div class="daily-quran-detail">
-        <h3 class="${dayDetailClass}">${boundary.summary}</h3>
-        <p>Juz ${boundary.juz} • Sumber: Kemenag RI</p>
+        <p>${rangeData.juzText || ('Juz ' + (rangeData.juzStart || rangeData.juz || 1))} &bull; ${targetSubtext}Sumber: Kemenag RI</p>
       </div>
 
       <div class="daily-status-ribbon ${isCompleted ? 'ribbon-done' : 'ribbon-pending'}">
@@ -729,9 +766,9 @@ const CalendarController = {
     dailyCard.querySelector('#btn-daily-cta').addEventListener('click', () => {
       if (window.App) {
         if (isHijri) {
-          window.App.openReader(dateKey, quranPage, hInfo.day, hInfo.monthName, `${hInfo.year} H`);
+          window.App.openReader(dateKey, startP, hInfo.day, hInfo.monthName, `${hInfo.year} H`, endP);
         } else {
-          window.App.openReader(dateKey, quranPage, dDay, this.MONTH_NAMES[dMonth], dYear);
+          window.App.openReader(dateKey, startP, dDay, this.MONTH_NAMES[dMonth], dYear, endP);
         }
       }
     });

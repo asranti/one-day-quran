@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>One Page Quran - Kalender Tilawah Kemenag RI</title>
+  <title>One Day Quran - Kalender Tilawah Kemenag RI</title>
   
   <!-- Meta & PWA Tags -->
-  <meta name="description" content="Aplikasi mobile One Page Quran (One Day One Page) berbasis kalender dan Al-Qur'an bersumber resmi dari Kementerian Agama RI (quran.kemenag.go.id)." />
+  <meta name="description" content="Aplikasi mobile One Day Quran berbasis kalender dan Al-Qur'an bersumber resmi dari Kementerian Agama RI (quran.kemenag.go.id)." />
   <meta name="theme-color" content="#58C4CF" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="One Page Quran" />
+  <meta name="apple-mobile-web-app-title" content="One Day Quran" />
   <link rel="manifest" href="manifest.json" />
 
   <!-- Font Resmi Mushaf Kemenag RI: LPMQ Isep Misbah -->
@@ -41,12 +41,11 @@
       <div class="header-top">
         <div class="brand-wrapper">
           <div class="brand-icon-box">
-            <img src="assets/icons/icon-192.png" alt="One Page Quran" class="brand-icon-img" />
+            <img src="assets/icons/icon-192.png" alt="One Day Quran" class="brand-icon-img" />
           </div>
           <div>
-            <h1 class="brand-title">One Page Quran</h1>
+            <h1 class="brand-title">One Day Quran</h1>
             <div class="brand-subtitle">
-              <span>One Day One Page Quran</span>
               <span class="kemenag-pill">Kemenag RI</span>
             </div>
           </div>
@@ -129,12 +128,6 @@
           </a>
         </div>
 
-        <!-- Meta Tag: Nama Surat & Juz -->
-        <div class="reader-meta-pills">
-          <span class="reader-pill pill-surah" id="reader-surah-badge">Surah</span>
-          <span class="reader-pill pill-juz" id="reader-juz-badge">Juz 1</span>
-        </div>
-
         <!-- Kontainer Ayat & Terjemahan Kemenag RI -->
         <div id="text-container"></div>
 
@@ -143,16 +136,6 @@
           <button class="btn-complete-reading btn-status-ready" id="btn-complete-reading">
             <span class="btn-icon">✓</span>
             <span>Selesai Baca & Tandai Checklist (✓)</span>
-          </button>
-        </div>
-
-        <!-- Navigasi Halaman Sebelumnya / Selanjutnya -->
-        <div class="reader-bottom-nav">
-          <button class="btn-page-nav" id="btn-reader-prev">
-            &#8592; Halaman Sebelumnya
-          </button>
-          <button class="btn-page-nav" id="btn-reader-next">
-            Halaman Selanjutnya &#8594;
           </button>
         </div>
       </section>
@@ -235,6 +218,21 @@
                   <input type="number" id="setting-start-page" min="1" max="604" value="1" style="width: 100px; padding: 10px; border: 1px solid var(--border-color); border-radius: 10px; font-weight: 700; font-size: 1rem;" />
                   <span style="font-size: 0.78rem; color: var(--text-muted);">Default: Halaman 1 (QS. Al-Fatihah).</span>
                 </div>
+              </div>
+
+              <div class="settings-group">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                  <label class="settings-label" for="setting-pages-per-day" style="margin-bottom: 0;">Target Bacaan Tiap Hari:</label>
+                  <span id="pages-per-day-badge" class="slider-badge-pill">1 Halaman / Hari</span>
+                </div>
+                <input type="range" id="setting-pages-per-day" min="1" max="20" step="1" value="1" class="settings-range-slider" />
+                <div class="slider-ticks-row">
+                  <span>1 Hal</span>
+                  <span>5 Hal</span>
+                  <span>10 Hal (½ Juz)</span>
+                  <span>20 Hal (1 Juz)</span>
+                </div>
+                <span id="pages-per-day-desc" class="slider-desc-help">1 Halaman per hari &bull; Khatam dalam ~604 hari (~20 bulan)</span>
               </div>
 
               <div class="settings-group">
