@@ -3,7 +3,7 @@
  * Cache offline app shell
  */
 
-const CACHE_NAME = 'quran-odop-v38';
+const CACHE_NAME = 'quran-odop-v41';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -15,6 +15,7 @@ const ASSETS_TO_CACHE = [
   './css/calendar.css',
   './css/reader.css',
   './css/timer.css',
+  './js/quran-offline-data.js',
   './js/quran-data.js',
   './js/storage.js',
   './js/timer.js',
@@ -60,7 +61,11 @@ self.addEventListener('fetch', (event) => {
       .catch(() => {
         return caches.match(event.request).then((cachedResponse) => {
           if (cachedResponse) return cachedResponse;
-          return caches.match('./index.html');
+          // Hanya kembalikan index.html untuk navigasi HTML browser, JANGAN untuk API call atau asset
+          if (event.request.mode === 'navigate') {
+            return caches.match('./index.html');
+          }
+          return Promise.reject(new Error('Network error and asset not cached'));
         });
       })
   );

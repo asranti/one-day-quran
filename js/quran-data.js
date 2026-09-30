@@ -173,6 +173,29 @@ const QURAN_DATA = {
     // Contoh halaman yang diuji user
     50: { surah: 3, surahName: "Ali 'Imran", startAyah: 1, endAyah: 9, juz: 3 },
     211: { surah: 10, surahName: 'Yunus', startAyah: 21, endAyah: 25, juz: 11 },
+    564: {
+      isMulti: true,
+      juz: 29,
+      sections: [
+        { surah: 67, surahName: 'Al-Mulk', startAyah: 27, endAyah: 30 },
+        { surah: 68, surahName: 'Al-Qalam', startAyah: 1, endAyah: 15 }
+      ]
+    },
+    565: {
+      surah: 68,
+      surahName: 'Al-Qalam',
+      startAyah: 16,
+      endAyah: 42,
+      juz: 29
+    },
+    566: {
+      isMulti: true,
+      juz: 29,
+      sections: [
+        { surah: 68, surahName: 'Al-Qalam', startAyah: 43, endAyah: 52 },
+        { surah: 69, surahName: 'Al-Haqqah', startAyah: 1, endAyah: 8 }
+      ]
+    },
     583: {
       isMulti: true,
       juz: 30,
@@ -210,14 +233,59 @@ const QURAN_DATA = {
    */
   getPageBoundary(pageNumber) {
     const p = Math.max(1, Math.min(604, pageNumber));
+
+    // PRIORITAS 1: Jika dataset offline lengkap tersedia, ambil boundary presisi langsung dari data aktual (604 Halaman)
+    if (typeof window !== 'undefined' && window.QURAN_OFFLINE_DATA && window.QURAN_OFFLINE_DATA[p]) {
+      const pData = window.QURAN_OFFLINE_DATA[p];
+      if (pData.groups && pData.groups.length > 0) {
+        const isMulti = pData.groups.length > 1;
+        const firstGrp = pData.groups[0];
+        const lastGrp = pData.groups[pData.groups.length - 1];
+        const firstAyah = (firstGrp.ayat && firstGrp.ayat.length > 0) ? firstGrp.ayat[0].nomorAyat : 1;
+        const lastAyah = (lastGrp.ayat && lastGrp.ayat.length > 0) ? lastGrp.ayat[lastGrp.ayat.length - 1].nomorAyat : 1;
+
+        const sections = pData.groups.map(g => {
+          const f = (g.ayat && g.ayat.length > 0) ? g.ayat[0].nomorAyat : 1;
+          const l = (g.ayat && g.ayat.length > 0) ? g.ayat[g.ayat.length - 1].nomorAyat : 1;
+          return {
+            surah: g.surahNumber,
+            surahName: g.surahName,
+            startAyah: f,
+            endAyah: l
+          };
+        });
+
+        return {
+          page: p,
+          juz: pData.juz,
+          isMulti: isMulti,
+          sections: sections,
+          primarySurahNumber: firstGrp.surahNumber,
+          primarySurahName: firstGrp.surahName,
+          startAyah: firstAyah,
+          endAyah: lastAyah,
+          summary: pData.titleSummary,
+          shortSummary: isMulti
+            ? pData.groups.map(g => g.surahName).join(', ')
+            : `${firstGrp.surahName}: ${firstAyah}-${lastAyah}`
+        };
+      }
+    }
+
     if (this.PAGE_BOUNDARIES[p]) {
       const b = this.PAGE_BOUNDARIES[p];
       if (b.isMulti) {
+        const firstSec = b.sections[0];
+        const lastSec = b.sections[b.sections.length - 1];
         return {
           page: p,
           juz: b.juz,
-          primarySurahNumber: b.sections[0].surah,
-          primarySurahName: b.sections[0].surahName,
+          isMulti: true,
+          sections: b.sections,
+          primarySurahNumber: firstSec.surah,
+          primarySurahName: firstSec.surahName,
+          startAyah: firstSec.startAyah,
+          endAyah: lastSec.endAyah,
           summary: b.sections.map(s => `QS. ${s.surahName} (${s.startAyah}-${s.endAyah})`).join(' & '),
           shortSummary: b.sections.map(s => s.surahName).join(', ')
         };
@@ -225,6 +293,7 @@ const QURAN_DATA = {
       return {
         page: p,
         juz: b.juz,
+        isMulti: false,
         primarySurahNumber: b.surah,
         primarySurahName: b.surahName,
         startAyah: b.startAyah,
@@ -240,6 +309,7 @@ const QURAN_DATA = {
     return {
       page: p,
       juz: j,
+      isMulti: false,
       primarySurahNumber: s.number,
       primarySurahName: s.name,
       startAyah: 1,
@@ -250,7 +320,7 @@ const QURAN_DATA = {
   },
 
   /**
-   * Dapatkan ringkasan gabungan ayat & surat untuk rentang halaman (misal 1 s/d 2)
+   * Dapatkan ringkasan gabungan ayat & surat untuk rentang halaman (misal 1 s/d 2, 565 s/d 566)
    */
   getPageRangeSummary(startPage, endPage) {
     const sP = Math.max(1, Math.min(604, startPage));
@@ -277,35 +347,28 @@ const QURAN_DATA = {
     const juzEnd = bEnd.juz;
     const juzText = (juzStart === juzEnd) ? `Juz ${juzStart}` : `Juz ${juzStart} - ${juzEnd}`;
 
+    // Ambil info surat awal dari bStart (apakah multi atau single)
+    const secStart = (bStart.isMulti && bStart.sections) ? bStart.sections[0] : null;
+    const sNameStart = secStart ? secStart.surahName : bStart.primarySurahName;
+    const sNumStart = secStart ? secStart.surah : bStart.primarySurahNumber;
+    const aStart = secStart ? secStart.startAyah : (bStart.startAyah || 1);
+
+    // Ambil info surat akhir dari bEnd (apakah multi atau single)
+    const secEndList = (bEnd.isMulti && bEnd.sections) ? bEnd.sections : null;
+    const secEnd = secEndList ? secEndList[secEndList.length - 1] : null;
+    const sNameEnd = secEnd ? secEnd.surahName : bEnd.primarySurahName;
+    const sNumEnd = secEnd ? secEnd.surah : bEnd.primarySurahNumber;
+    const aEnd = secEnd ? secEnd.endAyah : (bEnd.endAyah || bEnd.startAyah || 1);
+
     let summary = '';
     let shortSummary = '';
 
-    // Jika halaman awal dan akhir berada dalam surat yang sama
-    if (bStart.primarySurahNumber === bEnd.primarySurahNumber) {
-      const sName = bStart.primarySurahName;
-      const startAyah = bStart.startAyah || 1;
-      const endAyah = bEnd.endAyah || bEnd.startAyah || 1;
-      summary = `QS. ${sName} (Ayat ${startAyah} - ${endAyah})`;
-      shortSummary = `${sName}: ${startAyah}-${endAyah}`;
+    if (sNumStart === sNumEnd) {
+      summary = `QS. ${sNameStart} (Ayat ${aStart} - ${aEnd})`;
+      shortSummary = `${sNameStart}: ${aStart}-${aEnd}`;
     } else {
-      // Menyeberang surat (misal Al-Fatihah hal 1 ke Al-Baqarah hal 2)
-      const sName1 = bStart.primarySurahName;
-      const aStart1 = bStart.startAyah || 1;
-      const aEnd1 = bStart.endAyah || '';
-      const sName2 = bEnd.primarySurahName;
-      const aStart2 = bEnd.startAyah || 1;
-      const aEnd2 = bEnd.endAyah || '';
-
-      const pageCount = (eP >= sP) ? (eP - sP + 1) : 1;
-      if (pageCount <= 3) {
-        const p1 = aEnd1 ? `${aStart1}-${aEnd1}` : `${aStart1}`;
-        const p2 = aEnd2 ? `${aStart2}-${aEnd2}` : `${aStart2}`;
-        summary = `QS. ${sName1} (${p1}) & QS. ${sName2} (${p2})`;
-        shortSummary = `${sName1} & ${sName2}`;
-      } else {
-        summary = `QS. ${sName1} (${aStart1}) s/d QS. ${sName2} (${aEnd2 || aStart2})`;
-        shortSummary = `${sName1} s/d ${sName2}`;
-      }
+      summary = `QS. ${sNameStart} (${aStart}) s/d QS. ${sNameEnd} (${aEnd})`;
+      shortSummary = `${sNameStart} - ${sNameEnd}`;
     }
 
     return {
@@ -315,8 +378,8 @@ const QURAN_DATA = {
       juzStart,
       juzEnd,
       juzText,
-      primarySurahNumber: bStart.primarySurahNumber,
-      primarySurahName: bStart.primarySurahName,
+      primarySurahNumber: sNumStart,
+      primarySurahName: sNameStart,
       summary,
       shortSummary,
       isRange: true
@@ -449,12 +512,17 @@ const QURAN_DATA = {
   async fetchPageData(pageNumber) {
     const p = Math.max(1, Math.min(604, pageNumber));
 
-    // LAYER 1: Cek apakah halaman ini ada di bundle offline lokal berkecepatan tinggi
+    // LAYER 1: Cek apakah halaman ini ada di bundle LPMQ offline lokal
     if (this.BUNDLED_PAGES[p]) {
       return this.BUNDLED_PAGES[p];
     }
 
-    // LAYER 2: Cek cache memori & localStorage (Key standar Kemenag)
+    // LAYER 2: Cek dataset offline lengkap seluruh Al-Qur'an (604 Halaman Lengkap)
+    if (typeof window !== 'undefined' && window.QURAN_OFFLINE_DATA && window.QURAN_OFFLINE_DATA[p]) {
+      return window.QURAN_OFFLINE_DATA[p];
+    }
+
+    // LAYER 3: Cek cache memori & localStorage (Key standar Kemenag)
     if (this._pageCache[p]) {
       return this._pageCache[p];
     }
@@ -482,10 +550,31 @@ const QURAN_DATA = {
         }
       }
     } catch (e) {
-      console.log(`Quran.com API tidak dapat dijangkau untuk halaman ${p}, mencoba EQuran API...`);
+      console.log(`Quran.com API tidak dapat dijangkau untuk halaman ${p}, mencoba Al-Quran Cloud API...`);
     }
 
-    // LAYER 4: Coba EQuran.id API + Slicing Berdasarkan Batas Halaman
+    // LAYER 4: Coba Al-Quran Cloud API (Multi-edition page query: Arabic Uthmani + Terjemahan Kemenag/Indonesian)
+    try {
+      const alquranRes = await fetch(`${this.ALQURAN_CLOUD_API}/page/${p}/editions/quran-uthmani,id.indonesian`);
+      if (alquranRes.ok) {
+        const alquranJson = await alquranRes.json();
+        if (alquranJson && alquranJson.code === 200 && Array.isArray(alquranJson.data) && alquranJson.data.length >= 2) {
+          const arEdition = alquranJson.data[0];
+          const idEdition = alquranJson.data[1];
+          if (arEdition && arEdition.ayahs && arEdition.ayahs.length > 0) {
+            let parsed = this.parseAlQuranCloudPageResponse(p, arEdition.ayahs, idEdition ? idEdition.ayahs : []);
+            parsed = await this.enrichWithKemenagText(parsed);
+            this._pageCache[p] = parsed;
+            try { localStorage.setItem(`quran_odop_kemenag_page_${p}`, JSON.stringify(parsed)); } catch (e) {}
+            return parsed;
+          }
+        }
+      }
+    } catch (e) {
+      console.log(`Al-Quran Cloud API tidak dapat dijangkau untuk halaman ${p}, mencoba EQuran API...`);
+    }
+
+    // LAYER 5: Coba EQuran.id API + Slicing Berdasarkan Batas Halaman
     const boundary = this.getPageBoundary(p);
     if (boundary && boundary.primarySurahNumber && boundary.startAyah && boundary.endAyah) {
       try {
@@ -591,12 +680,25 @@ const QURAN_DATA = {
     const rangeMeta = this.getPageRangeSummary(sP, eP);
     const totalAyat = mergedGroups.reduce((acc, g) => acc + g.ayat.length, 0);
 
+    // Bangun titleSummary presisi berdasarkan kelompok ayat yang berhasil dimuat
+    let finalTitleSummary = rangeMeta.summary;
+    if (mergedGroups.length > 0) {
+      const parts = mergedGroups.map(g => {
+        if (!g.ayat || g.ayat.length === 0) return `QS. ${g.surahName}`;
+        const first = g.ayat[0].nomorAyat;
+        const last = g.ayat[g.ayat.length - 1].nomorAyat;
+        const r = (first === last) ? `Ayat ${first}` : `Ayat ${first} - ${last}`;
+        return `QS. ${g.surahName} (${r})`;
+      });
+      finalTitleSummary = parts.join(' & ');
+    }
+
     return {
       startPage: sP,
       endPage: eP,
       pageCount: pages.length,
       juz: rangeMeta.juzText || `Juz ${rangeMeta.juzStart || rangeMeta.juz || 1}`,
-      titleSummary: rangeMeta.summary,
+      titleSummary: finalTitleSummary,
       primarySurahNumber: rangeMeta.primarySurahNumber,
       primarySurahName: rangeMeta.primarySurahName,
       groups: mergedGroups,
@@ -641,6 +743,71 @@ const QURAN_DATA = {
         teksArab: v.text_uthmani,
         teksIndonesia: transText,
         juz: this.getJuzByPage(pageNumber),
+        page: pageNumber
+      });
+    });
+
+    const groups = Array.from(groupsMap.values());
+    let titleParts = [];
+    groups.forEach(g => {
+      const first = g.ayat[0].nomorAyat;
+      const last = g.ayat[g.ayat.length - 1].nomorAyat;
+      const range = first === last ? `Ayat ${first}` : `Ayat ${first} - ${last}`;
+      titleParts.push(`QS. ${g.surahName} (${range})`);
+    });
+
+    const primary = groups[0] || { surahNumber: 1, surahName: 'Al-Fatihah' };
+    return {
+      page: pageNumber,
+      juz: this.getJuzByPage(pageNumber),
+      titleSummary: titleParts.join(' & '),
+      primarySurahNumber: primary.surahNumber,
+      primarySurahName: primary.surahName,
+      groups: groups
+    };
+  },
+
+  /**
+   * Helper parse respons Al-Quran Cloud API multi-edition
+   */
+  parseAlQuranCloudPageResponse(pageNumber, arAyahs, idAyahs) {
+    const groupsMap = new Map();
+    const transMap = new Map();
+    if (Array.isArray(idAyahs)) {
+      idAyahs.forEach(a => {
+        const sNum = a.surah ? (typeof a.surah === 'object' ? a.surah.number : a.surah) : 0;
+        transMap.set(`${sNum}:${a.numberInSurah}`, a.text);
+      });
+    }
+
+    arAyahs.forEach(v => {
+      const sNum = v.surah ? (typeof v.surah === 'object' ? v.surah.number : v.surah) : 0;
+      const numInSurah = v.numberInSurah;
+
+      if (!groupsMap.has(sNum)) {
+        const surahMeta = this.SURAHS.find(s => s.number === sNum) || {
+          name: v.surah && v.surah.englishName ? v.surah.englishName : `Surah ${sNum}`,
+          arabic: v.surah && v.surah.name ? v.surah.name : '',
+          translation: '',
+          revelation: ''
+        };
+        groupsMap.set(sNum, {
+          surahNumber: sNum,
+          surahName: surahMeta.name,
+          arabicName: surahMeta.arabic,
+          translation: surahMeta.translation,
+          revelation: surahMeta.revelation,
+          ayat: []
+        });
+      }
+
+      const transText = transMap.get(`${sNum}:${numInSurah}`) || 'Terjemahan resmi Kemenag RI dapat disimak pada portal resmi.';
+
+      groupsMap.get(sNum).ayat.push({
+        nomorAyat: numInSurah,
+        teksArab: v.text,
+        teksIndonesia: transText,
+        juz: v.juz || this.getJuzByPage(pageNumber),
         page: pageNumber
       });
     });
@@ -1020,6 +1187,148 @@ const QURAN_DATA = {
               teksArab: 'وَاللَّهُ يَدْعُو إِلَىٰ دَارِ السَّلَامِ وَيَهْدِي مَن يَشَاءُ إِلَىٰ صِرَاطٍ مُّسْتَقِيمٍ',
               teksIndonesia: 'Dan Allah menyeru (manusia) ke Darussalam (surga), dan memberikan petunjuk kepada orang yang Dia kehendaki ke jalan yang lurus (Islam).'
             }
+          ]
+        }
+      ]
+    },
+
+    // HALAMAN 564 (QS. Al-Mulk 27 - 30 & QS. Al-Qalam 1 - 15)
+    564: {
+      page: 564,
+      juz: 29,
+      titleSummary: 'QS. Al-Mulk (Ayat 27 - 30) & QS. Al-Qalam (Ayat 1 - 15)',
+      primarySurahNumber: 67,
+      primarySurahName: 'Al-Mulk',
+      groups: [
+        {
+          surahNumber: 67,
+          surahName: 'Al-Mulk',
+          arabicName: 'الملك',
+          translation: 'Kerajaan',
+          revelation: 'Makkiyyah',
+          ayat: [
+            { nomorAyat: 27, teksArab: 'فَلَمَّا رَأَوْهُ زُلْفَةً سِيٓـَٔتْ وُجُوهُ ٱلَّذِينَ كَفَرُوا۟ وَقِيلَ هَـٰذَا ٱلَّذِى كُنتُم بِهِۦ تَدَّعُونَ', teksIndonesia: 'Maka ketika mereka melihat azab (pada hari Kiamat) sudah dekat, wajah orang-orang kafir itu menjadi muram. Dan dikatakan (kepada mereka), "Inilah (azab) yang dahulu kamu memintanya."' },
+            { nomorAyat: 28, teksArab: 'قُلْ أَرَءَيْتُمْ إِنْ أَهْلَكَنِىَ ٱللَّهُ وَمَن مَّعِىَ أَوْ رَحِمَنَا فَمَن يُجِيرُ ٱلْكَـٰفِرِينَ مِنْ عَذَابٍ أَلِيمٍ', teksIndonesia: 'Katakanlah (Muhammad), "Tahukah kamu jika Allah mematikan aku dan orang-orang yang bersamaku atau memberi rahmat kepada kami, (maka kami akan masuk surga), lalu siapa yang dapat melindungi orang-orang kafir dari azab yang pedih?"' },
+            { nomorAyat: 29, teksArab: 'قُلْ هُوَ ٱلرَّحْمَـٰنُ ءَامَنَّا بِهِۦ وَعَلَيْهِ تَوَكَّلْنَا ۖ فَسَتَعْلَمُونَ مَنْ هُوَ فِى ضَلَـٰلٍ مُّبِينٍ', teksIndonesia: 'Katakanlah, "Dialah Yang Maha Pengasih, kami beriman kepada-Nya dan kepada-Nya kami bertawakal. Maka kelak kamu akan tahu siapa yang berada dalam kesesatan yang nyata."' },
+            { nomorAyat: 30, teksArab: 'قُلْ أَرَءَيْتُمْ إِنْ أَصْبَحَ مَآؤُكُمْ غَوْرًا فَمَن يَأْتِيكُم بِمَآءٍ مَّعِينٍۭ', teksIndonesia: 'Katakanlah (Muhammad), "Terangkanlah kepadaku jika sumber air kamu menjadi kering; maka siapa yang akan memberimu air yang mengalir?"' }
+          ]
+        },
+        {
+          surahNumber: 68,
+          surahName: 'Al-Qalam',
+          arabicName: 'القلم',
+          translation: 'Pena',
+          revelation: 'Makkiyyah',
+          ayat: [
+            { nomorAyat: 1, teksArab: 'نٓ ۚ وَٱلْقَلَمِ وَمَا يَسْطُرُونَ', teksIndonesia: 'Nūn. Demi pena dan apa yang mereka tuliskan,' },
+            { nomorAyat: 2, teksArab: 'مَآ أَنتَ بِنِعْمَةِ رَبِّكَ بِمَجْنُونٍ', teksIndonesia: 'dengan karunia Tuhanmu engkau (Muhammad) bukanlah orang gila.' },
+            { nomorAyat: 3, teksArab: 'وَإِنَّ لَكَ لَأَجْرًا غَيْرَ مَمْنُونٍ', teksIndonesia: 'Dan sesungguhnya engkau pasti mendapat pahala yang besar yang tidak putus-putusnya.' },
+            { nomorAyat: 4, teksArab: 'وَإِنَّكَ لَعَلَىٰ خُلُقٍ عَظِيمٍ', teksIndonesia: 'Dan sesungguhnya engkau benar-benar, berbudi pekerti yang luhur.' },
+            { nomorAyat: 5, teksArab: 'فَسَتُبْصِرُ وَيُبْصِرُونَ', teksIndonesia: 'Maka kelak engkau akan melihat dan mereka (orang-orang kafir) pun akan melihat,' },
+            { nomorAyat: 6, teksArab: 'بِأَييِّكُمُ ٱلْمَفْتُونُ', teksIndonesia: 'siapa diantara kamu yang gila?' },
+            { nomorAyat: 7, teksArab: 'إِنَّ رَبَّكَ هُوَ أَعْلَمُ بِمَن ضَلَّ عَن سَبِيلِهِۦ وَهُوَ أَعْلَمُ بِٱلْمُهْتَدِينَ', teksIndonesia: 'Sungguh, Tuhanmu, Dialah yang paling mengetahui siapa yang sesat dari jalan-Nya; dan Dialah yang paling mengetahui siapa orang yang mendapat petunjuk.' },
+            { nomorAyat: 8, teksArab: 'فَلَا تُطِعِ ٱلْمُكَذِّبِينَ', teksIndonesia: 'Maka janganlah engkau patuhi orang-orang yang mendustakan (ayat-ayat Allah).' },
+            { nomorAyat: 9, teksArab: 'وَدُّوا۟ لَوْ تُدْهِنُ فَيُدْهِنُونَ', teksIndonesia: 'Mereka menginginkan agar engkau bersikap lunak maka mereka bersikap lunak (pula).' },
+            { nomorAyat: 10, teksArab: 'وَلَا تُطِعْ كُلَّ حَلَّافٍ مَّهِينٍ', teksIndonesia: 'Dan janganlah engkau patuhi setiap orang yang suka bersumpah dan suka menghina,' },
+            { nomorAyat: 11, teksArab: 'هَمَّازٍ مَّشَّآءٍۭ بِنَمِيمٍ', teksIndonesia: 'suka mencela, yang kian ke mari menyebarkan fitnah,' },
+            { nomorAyat: 12, teksArab: 'مَّنَّاعٍ لِّلْخَيْرِ مُعْتَدٍ أَثِيمٍ', teksIndonesia: 'yang merintangi segala yang baik, yang melampaui batas dan banyak dosa,' },
+            { nomorAyat: 13, teksArab: 'عُتُلٍّۭ بَعْدَ ذَٰلِكَ زَنِيمٍ', teksIndonesia: 'yang bertabiat kasar, selain itu juga terkenal kejahatannya,' },
+            { nomorAyat: 14, teksArab: 'أَن كَانَ ذَا مَالٍ وَبَنِينَ', teksIndonesia: 'karena dia kaya dan banyak anak.' },
+            { nomorAyat: 15, teksArab: 'إِذَا تُتْلَىٰ عَلَيْهِ ءَايَـٰتُنَا قَالَ أَسَـٰطِيرُ ٱلْأَوَّلِينَ', teksIndonesia: 'Apabila ayat-ayat Kami dibacakan kepadanya, dia berkata, "(Ini adalah) dongeng-dongeng orang dahulu."' }
+          ]
+        }
+      ]
+    },
+
+    // HALAMAN 565 (QS. Al-Qalam 16 - 42)
+    565: {
+      page: 565,
+      juz: 29,
+      titleSummary: 'QS. Al-Qalam (Ayat 16 - 42)',
+      primarySurahNumber: 68,
+      primarySurahName: 'Al-Qalam',
+      groups: [
+        {
+          surahNumber: 68,
+          surahName: 'Al-Qalam',
+          arabicName: 'القلم',
+          translation: 'Pena',
+          revelation: 'Makkiyyah',
+          ayat: [
+            { nomorAyat: 16, teksArab: 'سَنَسِمُهُۥ عَلَى ٱلْخُرْطُومِ', teksIndonesia: 'Kelak dia akan Kami beri tanda pada belalai(nya).' },
+            { nomorAyat: 17, teksArab: 'إِنَّا بَلَوْنَـٰهُمْ كَمَا بَلَوْنَآ أَصْحَـٰبَ ٱلْجَنَّةِ إِذْ أَقْسَمُوا۟ لَيَصْرِمُنَّهَا مُصْبِحِينَ', teksIndonesia: 'Sungguh, Kami telah menguji mereka (orang musyrik Mekkah) sebagaimana Kami telah menguji pemilik-pemilik kebun, ketika mereka bersumpah pasti akan memetik (hasil)nya pada pagi hari,' },
+            { nomorAyat: 18, teksArab: 'وَلَا يَسْتَثْنُونَ', teksIndonesia: 'tetapi mereka tidak mengecualikan (dengan mengucapkan, "Insya Allah").' },
+            { nomorAyat: 19, teksArab: 'فَطَافَ عَلَيْهَا طَآئِفٌ مِّن رَّبِّكَ وَهُمْ نَآئِمُونَ', teksIndonesia: 'Lalu kebun itu ditimpa bencana (yang datang) dari Tuhanmu ketika mereka sedang tidur.' },
+            { nomorAyat: 20, teksArab: 'فَأَصْبَحَتْ كَٱلصَّرِيمِ', teksIndonesia: 'Maka jadilah kebun itu hitam seperti malam yang gelap gulita,' },
+            { nomorAyat: 21, teksArab: 'فَتَنَادَوْا۟ مُصْبِحِينَ', teksIndonesia: 'lalu pada pagi hari mereka saling memanggil.' },
+            { nomorAyat: 22, teksArab: 'أَنِ ٱغْدُوا۟ عَلَىٰ حَرْثِكُمْ إِن كُنتُمْ صَـٰرِمِينَ', teksIndonesia: '"Pergilah pagi-pagi ke kebunmu jika kamu hendak memetik hasil."' },
+            { nomorAyat: 23, teksArab: 'فَٱنطَلَقُوا۟ وَهُمْ يَتَخَـٰفَتُونَ', teksIndonesia: 'Maka mereka pun berangkat sambil berbisik-bisik.' },
+            { nomorAyat: 24, teksArab: 'أَن لَّا يَدْخُلَنَّهَا ٱلْيَوْمَ عَلَيْكُم مِّسْكِينٌ', teksIndonesia: '"Pada hari ini jangan sampai ada orang miskin masuk ke dalam kebunmu."' },
+            { nomorAyat: 25, teksArab: 'وَغَدَوْا۟ عَلَىٰ حَرْدٍ قَـٰدِرِينَ', teksIndonesia: 'Dan berangkatlah mereka di pagi hari dengan niat menghalangi (orang-orang miskin) padahal mereka mampu (menolongnya).' },
+            { nomorAyat: 26, teksArab: 'فَلَمَّا رَأَوْهَا قَالُوٓا۟ إِنَّا لَضَآلُّونَ', teksIndonesia: 'Maka ketika mereka melihat kebun itu, mereka berkata, "Sungguh, kita ini benar-benar orang-orang yang sesat,"' },
+            { nomorAyat: 27, teksArab: 'بَلْ نَحْنُ مَحْرُومُونَ', teksIndonesia: 'bahkan kita tak memperoleh apa pun.' },
+            { nomorAyat: 28, teksArab: 'قَالَ أَوْسَطُهُمْ أَلَمْ أَقُل لَّكُمْ لَوْلَا تُسَبِّحُونَ', teksIndonesia: 'Berkatalah seorang yang paling bijak di antara mereka, "Bukankah aku telah mengatakan kepadamu, mengapa kamu tidak bertasbih (kepada Tuhanmu)."' },
+            { nomorAyat: 29, teksArab: 'قَالُوا۟ سُبْحَـٰنَ رَبِّنَآ إِنَّا كُنَّا ظَـٰلِمِينَ', teksIndonesia: 'Mereka mengucapkan, "Mahasuci Tuhan kami, sungguh, kami adalah orang-orang yang zalim."' },
+            { nomorAyat: 30, teksArab: 'فَأَقْبَلَ بَعْضُهُمْ عَلَىٰ بَعْضٍ يَتَلَـٰوَمُونَ', teksIndonesia: 'Lalu mereka saling berhadapan dan saling menyalahkan.' },
+            { nomorAyat: 31, teksArab: 'قَالُوا۟ يَـٰوَيْلَنَآ إِنَّا كُنَّا طَـٰغِينَ', teksIndonesia: 'Mereka berkata, "Celaka kita! Sesungguhnya kita orang-orang yang melampaui batas."' },
+            { nomorAyat: 32, teksArab: 'عَسَىٰ رَبُّنَآ أَن يُبْدِلَنَا خَيْرًا مِّنْهَآ إِنَّآ إِلَىٰ رَبِّنَا رَٰغِبُونَ', teksIndonesia: 'Mudah-mudahan Tuhan memberikan ganti kepada kita dengan (kebun) yang lebih baik daripada yang ini, sungguh, kita mengharapkan ampunan dari Tuhan kita.' },
+            { nomorAyat: 33, teksArab: 'كَذَٰلِكَ ٱلْعَذَابُ ۖ وَلَعَذَابُ ٱلْـَٔاخِرَةِ أَكْبَرُ ۚ لَوْ كَانُوا۟ يَعْلَمُونَ', teksIndonesia: 'Seperti itulah azab (di dunia). Dan sungguh, azab akhirat lebih besar sekiranya mereka mengetahui.' },
+            { nomorAyat: 34, teksArab: 'إِنَّ لِلْمُتَّقِينَ عِندَ رَبِّهِمْ جَنَّـٰتِ ٱلنَّعِيمِ', teksIndonesia: 'Sungguh, bagi orang-orang yang bertakwa (disediakan) surga yang penuh kenikmatan di sisi Tuhannya.' },
+            { nomorAyat: 35, teksArab: 'أَفَنَجْعَلُ ٱلْمُسْلِمِينَ كَٱلْمُجْرِمِينَ', teksIndonesia: 'Apakah patut Kami memperlakukan orang-orang Islam itu seperti orang-orang yang berdosa (orang kafir)?' },
+            { nomorAyat: 36, teksArab: 'مَا لَكُمْ كَيْفَ تَحْكُمُونَ', teksIndonesia: 'Mengapa kamu (berbuat demikian)? Bagaimana kamu mengambil keputusan?' },
+            { nomorAyat: 37, teksArab: 'أَمْ لَكُمْ كِتَـٰبٌ فِيهِ تَدْرُسُونَ', teksIndonesia: 'Atau apakah kamu mempunyai kitab (yang diturunkan Allah) yang kamu pelajari?' },
+            { nomorAyat: 38, teksArab: 'إِنَّ لَكُمْ فِيهِ لَمَا تَخَيَّرُونَ', teksIndonesia: 'sesungguhnya kamu dapat memilih apa saja yang ada di dalamnya.' },
+            { nomorAyat: 39, teksArab: 'أَمْ لَكُمْ أَيْمَـٰنٌ عَلَيْنَا بَـٰلِغَةٌ إِلَىٰ يَوْمِ ٱلْقِيَـٰمَةِ ۙ إِنَّ لَكُمْ لَمَا تَحْكُمُونَ', teksIndonesia: 'Atau apakah kamu memperoleh (janji-janji yang diperkuat dengan) sumpah dari Kami, yang tetap berlaku sampai hari Kiamat; bahwa kamu dapat mengambil keputusan (sekehendakmu)?' },
+            { nomorAyat: 40, teksArab: 'سَلْهُمْ أَيُّهُم بِذَٰلِكَ زَعِيمٌ', teksIndonesia: 'Tanyakanlah kepada mereka, "Siapakah di antara mereka yang bertanggung jawab terhadap (keputusan yang diambil itu)?"' },
+            { nomorAyat: 41, teksArab: 'أَمْ لَهُمْ شُرَكَآءُ فَلْيَأْتُوا۟ بِشُرَكَآئِهِمْ إِن كَانُوا۟ صَـٰدِقِينَ', teksIndonesia: 'Atau apakah mereka mempunyai sekutu-sekutu? Kalau begitu hendaklah mereka mendatangkan sekutu-sekutunya jika mereka orang-orang yang benar.' },
+            { nomorAyat: 42, teksArab: 'يَوْمَ يُكْشَفُ عَن سَاقٍ وَيُدْعَوْنَ إِلَى ٱلسُّجُودِ فَلَا يَسْتَطِيعُونَ', teksIndonesia: '(Ingatlah) pada hari ketika betis disingkapkan dan mereka diseru untuk bersujud; maka mereka tidak mampu,' }
+          ]
+        }
+      ]
+    },
+
+    // HALAMAN 566 (QS. Al-Qalam 43 - 52 & QS. Al-Haqqah 1 - 8)
+    566: {
+      page: 566,
+      juz: 29,
+      titleSummary: 'QS. Al-Qalam (Ayat 43 - 52) & QS. Al-Haqqah (Ayat 1 - 8)',
+      primarySurahNumber: 68,
+      primarySurahName: 'Al-Qalam',
+      groups: [
+        {
+          surahNumber: 68,
+          surahName: 'Al-Qalam',
+          arabicName: 'القلم',
+          translation: 'Pena',
+          revelation: 'Makkiyyah',
+          ayat: [
+            { nomorAyat: 43, teksArab: 'خَـٰشِعَةً أَبْصَـٰرُهُمْ تَرْهَقُهُمْ ذِلَّةٌ ۖ وَقَدْ كَانُوا۟ يُدْعَوْنَ إِلَى ٱلسُّجُودِ وَهُمْ سَـٰلِمُونَ', teksIndonesia: 'pandangan mereka tertunduk ke bawah, diliputi kehinaan. Dan sungguh, dahulu (di dunia) mereka telah diseru untuk bersujud waktu mereka sehat (tetapi mereka tidak melakukan).' },
+            { nomorAyat: 44, teksArab: 'فَذَرْنِى وَمَن يُكَذِّبُ بِهَـٰذَا ٱلْحَدِيثِ ۖ سَنَسْتَدْرِجُهُم مِّنْ حَيْثُ لَا يَعْلَمُونَ', teksIndonesia: 'Maka serahkanlah kepada-Ku (urusannya) dan orang-orang yang mendustakan perkataan ini (Alquran). Kelak akan Kami hukum mereka berangsur-angsur dari arah yang tidak mereka ketahui,' },
+            { nomorAyat: 45, teksArab: 'وَأُمْلِى لَهُمْ ۚ إِنَّ كَيْدِى مَتِينٌ', teksIndonesia: 'dan Aku memberi tenggang waktu kepada mereka. Sungguh, rencana-Ku sangat teguh.' },
+            { nomorAyat: 46, teksArab: 'أَمْ تَسْـَٔلُهُمْ أَجْرًا فَهُم مِّن مَّغْرَمٍ مُّثْقَلُونَ', teksIndonesia: 'Ataukah engkau (Muhammad) meminta imbalan kepada mereka, sehingga mereka dibebani dengan hutang?' },
+            { nomorAyat: 47, teksArab: 'أَمْ عِندَهُمُ ٱلْغَيْبُ فَهُمْ يَكْتُبُونَ', teksIndonesia: 'Ataukah mereka mengetahui yang gaib, lalu mereka menuliskannya?' },
+            { nomorAyat: 48, teksArab: 'فَٱصْبِرْ لِحُكْمِ رَبِّكَ وَلَا تَكُن كَصَاحِبِ ٱلْحُوتِ إِذْ نَادَىٰ وَهُوَ مَكْظُومٌ', teksIndonesia: 'Maka bersabarlah engkau (Muhammad) terhadap ketetapan Tuhanmu, dan janganlah engkau seperti (Yunus) orang yang berada dalam (perut) ikan ketika dia berdoa dengan hati sedih.' },
+            { nomorAyat: 49, teksArab: 'لَّوْلَآ أَن تَدَٰرَكَهُۥ نِعْمَةٌ مِّن رَّبِّهِۦ لَنُبِذَ بِٱلْعَرَآءِ وَهُوَ مَذْمُومٌ', teksIndonesia: 'Sekiranya dia tidak segera mendapat nikmat dari Tuhannya, pastilah dia dicampakkan ke tanah tandus dalam keadaan tercela.' },
+            { nomorAyat: 50, teksArab: 'فَٱجْتَبَـٰهُ رَبُّهُۥ فَجَعَلَهُۥ مِنَ ٱلصَّـٰلِحِينَ', teksIndonesia: 'Lalu Tuhannya memilihnya dan menjadikannya termasuk orang yang saleh.' },
+            { nomorAyat: 51, teksArab: 'وَإِن يَكَادُ ٱلَّذِينَ كَفَرُوا۟ لَيُزْلِقُونَكَ بِأَبْصَـٰرِهِمْ لَمَّا سَمِعُوا۟ ٱلذِّكْرَ وَيَقُولُونَ إِنَّهُۥ لَمَجْنُونٌ', teksIndonesia: 'Dan sungguh, orang-orang kafir itu hampir-hampir menggelincirkanmu dengan pandangan mata mereka, ketika mereka mendengar Alquran dan mereka berkata, "Dia (Muhammad) itu benar-benar orang gila."' },
+            { nomorAyat: 52, teksArab: 'وَمَا هُوَ إِلَّا ذِكْرٌ لِّلْعَـٰلَمِينَ', teksIndonesia: 'Padahal Alquran itu tidak lain adalah peringatan bagi seluruh alam.' }
+          ]
+        },
+        {
+          surahNumber: 69,
+          surahName: 'Al-Haqqah',
+          arabicName: 'الحاقة',
+          translation: 'Hari Kiamat',
+          revelation: 'Makkiyyah',
+          ayat: [
+            { nomorAyat: 1, teksArab: 'ٱلْحَآقَّةُ', teksIndonesia: 'Hari kiamat,' },
+            { nomorAyat: 2, teksArab: 'مَا ٱلْحَآقَّةُ', teksIndonesia: 'apakah hari Kiamat itu?' },
+            { nomorAyat: 3, teksArab: 'وَمَآ أَدْرَىٰكَ مَا ٱلْحَآقَّةُ', teksIndonesia: 'Dan tahukah kamu apakah hari Kiamat itu?' },
+            { nomorAyat: 4, teksArab: 'كَذَّبَتْ ثَمُودُ وَعَادٌۢ بِٱلْقَارِعَةِ', teksIndonesia: 'Kaum Samud, dan \'Ād telah mendustakan hari Kiamat.' },
+            { nomorAyat: 5, teksArab: 'فَأَمَّا ثَمُودُ فَأُهْلِكُوا۟ بِٱلطَّاغِيَةِ', teksIndonesia: 'Maka adapun kaum Samud, mereka telah dibinasakan dengan suara yang sangat keras,' },
+            { nomorAyat: 6, teksArab: 'وَأَمَّا عَادٌ فَأُهْلِكُوا۟ بِرِيحٍ صَرْصَرٍ عَاتِيَةٍ', teksIndonesia: 'sedangkan kaum \'Ād, mereka telah dibinasakan dengan angin topan yang sangat dingin,' },
+            { nomorAyat: 7, teksArab: 'سَخَّرَهَا عَلَيْهِمْ سَبْعَ لَيَالٍ وَثَمَـٰنِيَةَ أَيَّامٍ حُسُومًا فَتَرَى ٱلْقَوْمَ فِيهَا صَرْعَىٰ كَأَنَّهُمْ أَعْجَازُ نَخْلٍ خَاوِيَةٍ', teksIndonesia: 'Allah menimpakan angin itu kepada mereka selama tujuh malam delapan hari terus-menerus; maka kamu melihat kaum \'Ād pada waktu itu mati bergelimpangan seperti batang-batang pohon kurma yang telah kosong (lapuk).' },
+            { nomorAyat: 8, teksArab: 'فَهَلْ تَرَىٰ لَهُم مِّنۢ بَاقِيَةٍ', teksIndonesia: 'Maka adakah kamu melihat seorang pun yang masih tersisa di antara mereka?' }
           ]
         }
       ]
