@@ -22,10 +22,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Amiri:ital,wght@0,400;0,700&display=swap" rel="stylesheet" />
 
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="css/main.css" />
-  <link rel="stylesheet" href="css/calendar.css" />
-  <link rel="stylesheet" href="css/reader.css" />
-  <link rel="stylesheet" href="css/timer.css" />
+  <link rel="stylesheet" href="css/main.css?v=38" />
+  <link rel="stylesheet" href="css/calendar.css?v=38" />
+  <link rel="stylesheet" href="css/reader.css?v=38" />
+  <link rel="stylesheet" href="css/timer.css?v=38" />
 
   <!-- Favicon & App Icons -->
   <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png" />
@@ -47,7 +47,6 @@
             <h1 class="brand-title">One Day Quran</h1>
             <div class="brand-subtitle">
               <span class="brand-motto">Flexible Goals, but Istiqomah.</span>
-              <span class="kemenag-pill">Kemenag RI</span>
             </div>
           </div>
         </div>
@@ -168,26 +167,6 @@
           <div class="settings-panel active" id="settings-panel-tilawah">
             <form id="settings-form">
               <div class="settings-group">
-                <label class="settings-label">Mode Alokasi Halaman Al-Qur'an:</label>
-                
-                <label class="settings-radio-option">
-                  <input type="radio" name="reading-mode" id="mode-continuous" value="continuous" checked />
-                  <div>
-                    <div class="radio-text-title">Khatam Berkelanjutan (Rekomendasi ODOP)</div>
-                    <div class="radio-text-desc">Halaman berlanjut hari demi hari antar bulan (misal 30 Sept: Hal. 30 &rarr; 1 Okt: Hal. 31 &rarr; 2 Okt: Hal. 32 ...) tanpa mengulang ke Hal. 1.</div>
-                  </div>
-                </label>
-
-                <label class="settings-radio-option">
-                  <input type="radio" name="reading-mode" id="mode-monthly" value="monthly" />
-                  <div>
-                    <div class="radio-text-title">Siklus Bulanan (Reset Tiap Bulan)</div>
-                    <div class="radio-text-desc">Setiap tanggal 1 awal bulan selalu kembali mengulang dari Halaman 1 (atau halaman awal yang ditentukan).</div>
-                  </div>
-                </label>
-              </div>
-
-              <div class="settings-group">
                 <label class="settings-label">Pilihan Jenis Kalender:</label>
                 
                 <label class="settings-radio-option" id="opt-cal-type-gregorian">
@@ -234,6 +213,26 @@
                   <span>20 Hal (1 Juz)</span>
                 </div>
                 <span id="pages-per-day-desc" class="slider-desc-help">1 Halaman per hari &bull; Khatam dalam ~604 hari (~20 bulan)</span>
+              </div>
+
+              <div class="settings-group">
+                <label class="settings-label">Mode Alokasi Halaman Al-Qur'an:</label>
+                
+                <label class="settings-radio-option">
+                  <input type="radio" name="reading-mode" id="mode-continuous" value="continuous" checked />
+                  <div>
+                    <div class="radio-text-title">Khatam Berkelanjutan (Rekomendasi ODOP)</div>
+                    <div class="radio-text-desc">Halaman berlanjut hari demi hari antar bulan (misal 30 Sept: Hal. 30 &rarr; 1 Okt: Hal. 31 &rarr; 2 Okt: Hal. 32 ...) tanpa mengulang ke Hal. 1.</div>
+                  </div>
+                </label>
+
+                <label class="settings-radio-option">
+                  <input type="radio" name="reading-mode" id="mode-monthly" value="monthly" />
+                  <div>
+                    <div class="radio-text-title">Siklus Bulanan (Reset Tiap Bulan)</div>
+                    <div class="radio-text-desc">Setiap tanggal 1 awal bulan selalu kembali mengulang dari Halaman 1 (atau halaman awal yang ditentukan).</div>
+                  </div>
+                </label>
               </div>
 
               <div class="settings-group">
@@ -368,12 +367,12 @@
   </div>
 
   <!-- JavaScript Modules -->
-  <script src="js/quran-data.js"></script>
-  <script src="js/storage.js"></script>
-  <script src="js/timer.js"></script>
-  <script src="js/calendar.js"></script>
-  <script src="js/reader.js"></script>
-  <script src="js/app.js"></script>
+  <script src="js/quran-data.js?v=38"></script>
+  <script src="js/storage.js?v=38"></script>
+  <script src="js/timer.js?v=38"></script>
+  <script src="js/calendar.js?v=38"></script>
+  <script src="js/reader.js?v=38"></script>
+  <script src="js/app.js?v=38"></script>
 
 </body>
 </html>

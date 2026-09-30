@@ -292,31 +292,17 @@ body {
 }
 
 .brand-subtitle {
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   font-weight: 500;
   opacity: 0.95;
   color: var(--text-main);
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  column-gap: 6px;
-  row-gap: 2px;
-  margin-top: 3px;
-}
-
-.kemenag-pill {
-  background: var(--accent-gold);
-  color: var(--text-main);
-  padding: 2px 7px;
-  border-radius: 6px;
-  font-size: 0.65rem;
-  font-weight: 800;
-  border: 1px solid #d99e30;
-  flex-shrink: 0;
+  margin-top: 2px;
 }
 
 .brand-motto {
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   font-weight: 600;
   color: var(--text-main);
   opacity: 0.9;

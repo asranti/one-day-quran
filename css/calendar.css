@@ -694,3 +694,49 @@
 .btn-daily-read-cta:active {
   transform: scale(0.98);
 }
+
+/* ==========================================================================
+   Animasi Gestur Usap Layar (Swipe) & Transisi Kalender Bulanan
+   ========================================================================== */
+#calendar-container {
+  touch-action: pan-y;
+  position: relative;
+  min-height: 340px;
+}
+
+@keyframes calSlideInFromRight {
+  0% {
+    opacity: 0.35;
+    transform: translateX(36px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes calSlideInFromLeft {
+  0% {
+    opacity: 0.35;
+    transform: translateX(-36px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.cal-slide-next {
+  animation: calSlideInFromRight 0.22s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+.cal-slide-prev {
+  animation: calSlideInFromLeft 0.22s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cal-slide-next,
+  .cal-slide-prev {
+    animation: none !important;
+  }
+}

@@ -36,8 +36,8 @@ const App = {
     const btnNextMonth = document.getElementById('btn-next-month');
     const btnToday = document.getElementById('btn-go-today');
 
-    if (btnPrevMonth) btnPrevMonth.addEventListener('click', () => CalendarController.prevPeriod());
-    if (btnNextMonth) btnNextMonth.addEventListener('click', () => CalendarController.nextPeriod());
+    if (btnPrevMonth) btnPrevMonth.addEventListener('click', () => CalendarController.prevPeriod('slide-right'));
+    if (btnNextMonth) btnNextMonth.addEventListener('click', () => CalendarController.nextPeriod('slide-left'));
     if (btnToday) btnToday.addEventListener('click', () => CalendarController.goToToday());
 
     // Modal Pengaturan & Info
@@ -200,52 +200,46 @@ const App = {
   },
 
   /**
-   * Inisialisasi sinkronisasi navigasi riwayat browser / tombol back HP (History API)
+   * Inisialisasi navigasi riwayat browser / tombol back HP berbasis hash routing
+   * Menjamin tombol back pada HP selalu kembali ke Kalender saat berada di Reader
    */
   initHistoryNavigation() {
-    try {
-      if (window.location.hash === '#reader') {
-        window.history.replaceState({ screen: 'calendar' }, '', window.location.pathname + window.location.search);
+    // Bersihkan hash jika awalnya dibuka dengan #reader
+    if (window.location.hash === '#reader') {
+      try {
+        if (window.history && window.history.replaceState) {
+          window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        } else {
+          window.location.hash = '';
+        }
+      } catch (e) {
+        window.location.hash = '';
+      }
+    }
+
+    const onNavChange = () => {
+      // Tutup modal terbuka jika ada
+      const settingsModal = document.getElementById('settings-modal');
+      const jumpModal = document.getElementById('jump-modal');
+      if (settingsModal && settingsModal.classList.contains('active')) settingsModal.classList.remove('active');
+      if (jumpModal && jumpModal.classList.contains('active')) jumpModal.classList.remove('active');
+
+      const isReaderHash = (window.location.hash === '#reader');
+      if (!isReaderHash) {
+        // Tombol back HP ditekan saat di reader: kembali ke kalender
+        if (this.currentScreen === 'reader') {
+          this.showScreen('calendar', false);
+        }
       } else {
-        window.history.replaceState({ screen: 'calendar' }, '', window.location.pathname + window.location.search);
+        // Jika navigasi forward ke #reader
+        if (this.currentScreen !== 'reader') {
+          this.showScreen('reader', false);
+        }
       }
-    } catch (e) {
-      if (window.console && window.console.warn) {
-        window.console.warn('replaceState warning:', e);
-      }
-    }
+    };
 
-    // Tangani tombol back pada HP / browser
-    window.addEventListener('popstate', (event) => {
-      this.handlePopState(event);
-    });
-
-    // Fallback hashchange
-    window.addEventListener('hashchange', () => {
-      if (this.currentScreen === 'reader' && window.location.hash !== '#reader') {
-        this.showScreen('calendar', false);
-      }
-    });
-  },
-
-  /**
-   * Handler saat pengguna menekan tombol back HP / browser
-   */
-  handlePopState(event) {
-    // Tutup modal jika ada yang terbuka
-    const settingsModal = document.getElementById('settings-modal');
-    const jumpModal = document.getElementById('jump-modal');
-    if (settingsModal && settingsModal.classList.contains('active')) {
-      settingsModal.classList.remove('active');
-    }
-    if (jumpModal && jumpModal.classList.contains('active')) {
-      jumpModal.classList.remove('active');
-    }
-
-    // Jika saat ini di layar reader, kembali ke layar kalender
-    if (this.currentScreen === 'reader') {
-      this.showScreen('calendar', false);
-    }
+    window.addEventListener('hashchange', onNavChange);
+    window.addEventListener('popstate', onNavChange);
   },
 
   /**
@@ -254,7 +248,6 @@ const App = {
    * @param {boolean} updateHistory sinkronkan ke history browser untuk tombol back HP (default: true)
    */
   showScreen(screenName, updateHistory = true) {
-    const prevScreen = this.currentScreen;
     this.currentScreen = screenName;
     const calendarView = document.getElementById('calendar-view');
     const readerView = document.getElementById('reader-view');
@@ -264,14 +257,21 @@ const App = {
       if (readerView) readerView.style.display = 'none';
       window.scrollTo({ top: 0, behavior: 'smooth' });
 
-      // Jika kembali ke kalender melalui tombol UI reader dan ada entri reader di history,
-      // lakukan history.back() agar riwayat kembali bersih
-      if (updateHistory && prevScreen === 'reader') {
-        if (window.location.hash === '#reader' || (window.history.state && window.history.state.screen === 'reader')) {
+      // Jika kembali ke kalender melalui tombol UI reader dan hash masih #reader,
+      // panggil history.back() agar hash terlepas kembali ke kosong
+      if (updateHistory) {
+        if (window.location.hash === '#reader') {
           try {
             window.history.back();
           } catch (e) {
-            if (window.console && window.console.warn) window.console.warn('history.back warning:', e);
+            window.location.hash = '';
+          }
+          if (typeof window !== 'undefined' && window.setTimeout) {
+            window.setTimeout(() => {
+              if (window.location.hash === '#reader') {
+                try { window.location.hash = ''; } catch (err) {}
+              }
+            }, 100);
           }
         }
       }
@@ -280,16 +280,14 @@ const App = {
       if (readerView) readerView.style.display = 'block';
       window.scrollTo({ top: 0, behavior: 'smooth' });
 
-      // Tambahkan entri riwayat saat membuka reader agar tombol back HP kembali ke kalender
+      // Masukkan hash #reader ke URL agar tombol back fisik/sistem HP mengenali riwayat dan kembali ke Kalender
       if (updateHistory) {
-        if (window.location.hash !== '#reader' || !window.history.state || window.history.state.screen !== 'reader') {
+        if (window.location.hash !== '#reader') {
           try {
-            window.history.pushState({ screen: 'reader' }, '', '#reader');
+            window.location.hash = 'reader';
           } catch (e) {
-            try {
-              window.location.hash = 'reader';
-            } catch (hErr) {
-              if (window.console && window.console.warn) window.console.warn('hash setting warning:', hErr);
+            if (window.history && window.history.pushState) {
+              window.history.pushState(null, '', '#reader');
             }
           }
         }
@@ -452,7 +450,10 @@ const App = {
     if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('sw.js')
-          .then(reg => console.log('Service Worker terdaftar:', reg.scope))
+          .then(reg => {
+            console.log('Service Worker terdaftar:', reg.scope);
+            try { reg.update(); } catch (e) {}
+          })
           .catch(err => console.log('Service Worker gagal mendaftar:', err));
       });
     }

@@ -17,6 +17,7 @@ const CalendarController = {
   statsBannerEl: null,
   statsLabelEl: null,
   streakLabelEl: null,
+  justSwiped: false,
 
   MONTH_NAMES: [
     'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
@@ -56,6 +57,7 @@ const CalendarController = {
     this.calendarType = settings.calendarType || 'gregorian';
 
     this.bindModeButtons();
+    this.bindSwipeGestures();
     this.updateToggleBadge();
     this.render();
   },
@@ -82,6 +84,119 @@ const CalendarController = {
           window.App.showToast(`Beralih ke ${name} ✨`, 'info');
         }
       });
+    }
+  },
+
+  /**
+   * Bind gestur usap layar (swipe) ke kanan dan ke kiri pada tab bulanan
+   */
+  bindSwipeGestures() {
+    const calendarView = document.getElementById('calendar-view');
+    if (!calendarView) return;
+
+    let startX = 0;
+    let startY = 0;
+    let startTime = 0;
+    let isTracking = false;
+
+    const handleStart = (clientX, clientY, target) => {
+      // Gestur usap hanya aktif pada tab bulanan
+      if (this.viewMode !== 'month') return;
+      // Jangan cegah interaksi tombol navigasi / tab kontrol atas
+      if (target && target.closest && target.closest('button, .cal-type-badge-btn, .btn-today-pill, .cal-mode-btn, .btn-month-nav, a, input, select')) {
+        return;
+      }
+      startX = clientX;
+      startY = clientY;
+      startTime = Date.now();
+      isTracking = true;
+    };
+
+    const handleEnd = (clientX, clientY) => {
+      if (!isTracking || this.viewMode !== 'month') {
+        isTracking = false;
+        return;
+      }
+      isTracking = false;
+
+      const dx = clientX - startX;
+      const dy = clientY - startY;
+      const dt = Date.now() - startTime;
+
+      const minDistance = 45; // jarak piksel minimal usapan
+      const maxTime = 800;    // batas waktu gesture usap (ms)
+
+      // Pastikan dominan gerakan horizontal (bukan scroll vertikal)
+      if (dt <= maxTime && Math.abs(dx) >= minDistance && Math.abs(dx) > Math.abs(dy) * 1.25) {
+        this.justSwiped = true;
+        setTimeout(() => {
+          this.justSwiped = false;
+        }, 350);
+
+        if (dx > 0) {
+          // Usap ke kanan: melihat bulan sebelum
+          this.prevPeriod('slide-right');
+        } else {
+          // Usap ke kiri: melihat bulan setelahnya
+          this.nextPeriod('slide-left');
+        }
+      }
+    };
+
+    // Touch events untuk smartphone dan tablet
+    calendarView.addEventListener('touchstart', (e) => {
+      if (e.touches && e.touches.length === 1) {
+        handleStart(e.touches[0].clientX, e.touches[0].clientY, e.target);
+      }
+    }, { passive: true });
+
+    calendarView.addEventListener('touchend', (e) => {
+      if (e.changedTouches && e.changedTouches.length > 0) {
+        handleEnd(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+      }
+    }, { passive: true });
+
+    calendarView.addEventListener('touchcancel', () => {
+      isTracking = false;
+    }, { passive: true });
+
+    // Mouse drag events untuk desktop / kursor
+    calendarView.addEventListener('mousedown', (e) => {
+      if (e.button === 0) {
+        handleStart(e.clientX, e.clientY, e.target);
+      }
+    });
+
+    calendarView.addEventListener('mouseup', (e) => {
+      if (isTracking) {
+        handleEnd(e.clientX, e.clientY);
+      }
+    });
+
+    calendarView.addEventListener('mouseleave', () => {
+      isTracking = false;
+    });
+
+    // Mencegah klik phantom pada sel tanggal jika gestur usap baru saja dipicu
+    calendarView.addEventListener('click', (e) => {
+      if (this.justSwiped) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    }, true);
+  },
+
+  /**
+   * Menerapkan animasi geser / transisi kalender
+   */
+  applySlideAnimation(direction) {
+    if (!this.containerEl) return;
+    this.containerEl.classList.remove('cal-slide-next', 'cal-slide-prev');
+    void this.containerEl.offsetWidth; // Trigger reflow
+    if (direction === 'slide-left' || direction === 'next') {
+      this.containerEl.classList.add('cal-slide-next');
+    } else if (direction === 'slide-right' || direction === 'prev') {
+      this.containerEl.classList.add('cal-slide-prev');
     }
   },
 
@@ -249,7 +364,7 @@ const CalendarController = {
   /**
    * Navigasi periode sebelumnya (Bulan, Minggu, atau Hari)
    */
-  prevPeriod() {
+  prevPeriod(animation = 'slide-right') {
     if (this.viewMode === 'month') {
       if (this.calendarType === 'hijri') {
         const h = this.getHijriInfo(this.currentDate);
@@ -263,16 +378,19 @@ const CalendarController = {
       this.currentDate.setDate(this.currentDate.getDate() - 1);
     }
     this.render();
+    if (animation && this.viewMode === 'month') {
+      this.applySlideAnimation(animation);
+    }
   },
 
   prevMonth() {
-    this.prevPeriod();
+    this.prevPeriod('slide-right');
   },
 
   /**
    * Navigasi periode berikutnya (Bulan, Minggu, atau Hari)
    */
-  nextPeriod() {
+  nextPeriod(animation = 'slide-left') {
     if (this.viewMode === 'month') {
       if (this.calendarType === 'hijri') {
         const h = this.getHijriInfo(this.currentDate);
@@ -286,10 +404,13 @@ const CalendarController = {
       this.currentDate.setDate(this.currentDate.getDate() + 1);
     }
     this.render();
+    if (animation && this.viewMode === 'month') {
+      this.applySlideAnimation(animation);
+    }
   },
 
   nextMonth() {
-    this.nextPeriod();
+    this.nextPeriod('slide-left');
   },
 
   /**
@@ -350,11 +471,6 @@ const CalendarController = {
    */
   render() {
     if (!this.containerEl) return;
-
-    // Sembunyikan banner statistik (Target & Streak) khusus pada tab Harian
-    if (this.statsBannerEl) {
-      this.statsBannerEl.style.display = this.viewMode === 'day' ? 'none' : '';
-    }
 
     if (this.viewMode === 'month') {
       this.renderMonthView();
@@ -462,6 +578,7 @@ const CalendarController = {
       `;
 
       cell.addEventListener('click', () => {
+        if (this.justSwiped) return;
         if (window.App) {
           window.App.openReader(dateKey, startP, day, this.MONTH_NAMES[month], year, endP);
         }
@@ -561,6 +678,7 @@ const CalendarController = {
       `;
 
       cell.addEventListener('click', () => {
+        if (this.justSwiped) return;
         if (window.App) {
           window.App.openReader(dateKey, startP, dayObj.hijriDay, hData.monthName, `${hData.hijriYear} H`, endP);
         }
@@ -775,6 +893,9 @@ const CalendarController = {
 
     dayView.appendChild(dailyCard);
     this.containerEl.appendChild(dayView);
+
+    // Update progres header untuk tab Harian: 0/1 (0%) atau 1/1 (100%) Hari ini
+    this.updateStatsDisplay(isCompleted ? 1 : 0, 1);
   },
 
   /**
@@ -785,7 +906,12 @@ const CalendarController = {
 
     if (this.statsLabelEl) {
       const percent = Math.round((completedCount / totalCount) * 100);
-      const label = this.viewMode === 'week' ? 'Minggu Ini' : 'Bulan Ini';
+      let label = 'Bulan Ini';
+      if (this.viewMode === 'week') {
+        label = 'Minggu Ini';
+      } else if (this.viewMode === 'day') {
+        label = 'Hari Ini';
+      }
       this.statsLabelEl.innerHTML = `
         <div class="stats-badge">
           <span class="stats-num">${completedCount}</span> / ${totalCount} Selesai (${percent}%) &bull; ${label}
